@@ -8,8 +8,8 @@ public class Projekt {
     private String navn;
     private String kvartal;
     private YearMonth årMåneder;
+    // Association
     private ArrayList<Opgave> opgaver;
-
 
     public Projekt(String kvartal, String navn,YearMonth årMåneder) {
         this.kvartal = kvartal;
@@ -47,5 +47,20 @@ public class Projekt {
 
     public void setÅrMåneder(YearMonth årMåneder) {
         this.årMåneder = årMåneder;
+    }
+
+    public void addOpgave (Opgave opgave) {
+        if (!opgaver.contains(opgave)) {
+            opgaver.add(opgave);
+        }
+    }
+
+    public void deleteOpgavek(Opgave opgave) {
+        opgaver.remove(opgave);
+    }
+
+    @Override
+    public String toString() {
+        return "navn: " + navn + ", kvartal: " + kvartal + ", årMåneder: " + årMåneder + ", Opgaver: " + opgaver;
     }
 }
