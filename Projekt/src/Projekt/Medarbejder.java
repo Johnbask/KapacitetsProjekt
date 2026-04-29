@@ -70,4 +70,33 @@ public class Medarbejder {
     public void setTeam(String team) {
         this.team = team;
     }
+
+    public void deleteMedarbejder(Medarbejder medarbejder){
+        medarbejder.deleteMedarbejder(medarbejder);
+    }
+
+    public void AddMedarbejder(Medarbejder medarbejder){
+        medarbejder.AddMedarbejder(medarbejder);
+    }
+
+    //  Todo
+
+    /* Metode til at visse den allokeret tid på medarbejderen ex: jun:1 jul:1 aug:1 osv...
+    vi vil gerne kunne visse det med alle projekter medarbejdren er på */
+    public void  visAllokeretTid(){}
+
+
+    /*Metode til at "updatere" den tid der allokeres til medarbejderen  */
+    public void allokeretTid(){}
+
+    /*I tilfælde af at den allokerede ikke er korekt for medarbejderen (de kunne have en ordning hvor de kun er på halvtid)
+    vil vi gerne kunne redigere deres tid til fx 0,5 */
+    public void redigereAlokeretTid(){}
+
+
+    /*Metode der sætter medarbejder til ledig hvis de ikke har allokeret tid (nok mere en hjølpe metode)*/
+    public void Ledig(){}
+
+
+
 }

@@ -22,4 +22,12 @@ public class Opgave {
     public void setNavn(String navn) {
         this.navn = navn;
     }
+
+    // Todo
+
+    public void  AddOpgave(){}
+
+    public void  deleteOpagve(){}
+
+
 }

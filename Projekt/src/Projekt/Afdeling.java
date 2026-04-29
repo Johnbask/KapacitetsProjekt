@@ -38,4 +38,13 @@ public class Afdeling {
     public void setOrganisation(String organisation) {
         this.organisation = organisation;
     }
+
+    // Todo
+
+    public void addAfdeling(){}
+
+    public void deleteAfdeling(){}
+
+
+
 }
