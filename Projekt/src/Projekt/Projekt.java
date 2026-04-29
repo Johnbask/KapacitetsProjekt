@@ -1,7 +1,9 @@
 package Projekt;
 
+import java.lang.reflect.Array;
 import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Projekt {
 
@@ -59,8 +61,11 @@ public class Projekt {
         opgaver.remove(opgave);
     }
 
+    /*
+
+    */
     @Override
     public String toString() {
-        return "navn: " + navn + ", kvartal: " + kvartal + ", årMåneder: " + årMåneder + ", Opgaver: " + opgaver;
+        return "navn: " + navn + ", kvartal: " + kvartal + ", årMåneder: " + årMåneder + ", Opgaver: " + opgaver.toString();
     }
 }
