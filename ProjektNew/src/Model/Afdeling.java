@@ -1,3 +1,7 @@
+package Model;
+
+import Model.Enum.ØkonomiType;
+
 import java.util.ArrayList;
 
 public class Afdeling {

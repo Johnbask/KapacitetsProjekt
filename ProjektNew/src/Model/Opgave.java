@@ -1,3 +1,7 @@
+package Model;
+
+import Model.Enum.OpgaveType;
+
 public class Opgave {
     private int opgaveId;
     private String navn;

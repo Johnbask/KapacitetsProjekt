@@ -1,3 +1,5 @@
+package Model;
+
 public class Team {
     private int teamId;
     private String navn;

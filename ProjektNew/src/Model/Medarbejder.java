@@ -1,3 +1,7 @@
+package Model;
+
+import Model.Enum.MedarbejderType;
+
 public class Medarbejder {
     private String initialer;
     private String navn;

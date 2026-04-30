@@ -1,5 +1,6 @@
+package Model;
+
 import java.time.LocalDate;
-import java.util.Locale;
 
 public class Fase {
     private LocalDate år;

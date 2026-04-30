@@ -1,3 +1,5 @@
+package Model;
+
 public class Organisation {
     private int orgId;
     private String navn;

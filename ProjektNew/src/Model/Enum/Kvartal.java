@@ -1,3 +1,5 @@
+package Model.Enum;
+
 public enum Kvartal {
     Q1,
     Q2,
