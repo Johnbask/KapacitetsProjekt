@@ -11,7 +11,8 @@ public class Projekt {
     private String kvartal;
     private YearMonth årMåneder;
     // Association
-    private ArrayList<Opgave> opgaver;
+    private ArrayList<Opgave> opgaver = new ArrayList<>();
+    private ArrayList<Medarbejder> medarbejdere = new ArrayList<>();
 
     public Projekt(String kvartal, String navn,YearMonth årMåneder) {
         this.kvartal = kvartal;
@@ -51,7 +52,7 @@ public class Projekt {
         this.årMåneder = årMåneder;
     }
 
-    public void addOpgave (Opgave opgave) {
+    public void addOpgave(Opgave opgave) {
         if (!opgaver.contains(opgave)) {
             opgaver.add(opgave);
         }
@@ -61,11 +62,20 @@ public class Projekt {
         opgaver.remove(opgave);
     }
 
+    public ArrayList<Medarbejder> getMedarbejdere() {
+        return medarbejdere;
+    }
+
+    public void addMedarbejder(Medarbejder medarbejder) {
+        if (!medarbejdere.contains(medarbejder)) {
+            medarbejdere.add(medarbejder);
+        }
+    }
     /*
 
     */
     @Override
     public String toString() {
-        return "navn: " + navn + ", kvartal: " + kvartal + ", årMåneder: " + årMåneder + ", Opgaver: " + opgaver.toString();
+        return "navn: " + navn + ", kvartal: " + kvartal + ", årMåneder: " + årMåneder + ", Opgaver: " + opgaver + ", Medarbejdere: " + medarbejdere;
     }
 }
