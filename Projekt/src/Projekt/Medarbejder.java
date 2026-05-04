@@ -71,6 +71,8 @@ public class Medarbejder {
         this.team = team;
     }
 
+
+
     public void deleteMedarbejder(Medarbejder medarbejder){
         medarbejder.deleteMedarbejder(medarbejder);
     }
@@ -93,9 +95,10 @@ public class Medarbejder {
     vil vi gerne kunne redigere deres tid til fx 0,5 */
     public void redigereAlokeretTid(){}
 
-
     /*Metode der sætter medarbejder til ledig hvis de ikke har allokeret tid (nok mere en hjølpe metode)*/
     public void Ledig(){}
+
+
 
 
 
