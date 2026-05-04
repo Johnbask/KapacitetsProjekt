@@ -24,6 +24,10 @@ public class Behov {
     public void  deletebehov(){}
 
     /* Metode til alerte når bemanding er under eller over kapacitets behov for projektet  */
-    public void AlertBehov(){}
+    public void AlertBehov(int currentBemanding){
+
+
+    }
+
 
 }
