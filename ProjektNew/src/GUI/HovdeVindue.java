@@ -1,16 +1,12 @@
 package GUI;
 
 
-
-import Projekt.Projekt;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
-
-import java.awt.*;
 
 public class HovdeVindue extends Application {
 
