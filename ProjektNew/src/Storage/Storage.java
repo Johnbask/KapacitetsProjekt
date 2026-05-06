@@ -7,7 +7,6 @@ import java.util.ArrayList;
 public class Storage {
     private static ArrayList<Medarbejder> medarbejdere = new ArrayList<>();
     private static ArrayList<Projekt> projekter = new ArrayList<>();
-    private static ArrayList<Opgave> opgaver = new ArrayList<>();
     private static ArrayList<Organisation> organisationer = new ArrayList<>();
     private static ArrayList<Team> teams = new ArrayList<>();
     private static ArrayList<Afdeling> afdelinger = new ArrayList<>();
@@ -18,9 +17,6 @@ public class Storage {
 
     public static void addProjekt(Projekt p) { projekter.add(p); }
     public static void deleteProjekt(Projekt p) { projekter.remove(p); }
-
-    public static void addOpgave(Opgave o) { opgaver.add(o); }
-    public static void deleteOpgave(Opgave o) { opgaver.remove(o); }
 
     public static void addOrganisation(Organisation o) { organisationer.add(o); }
     public static void deleteOrganisation(Organisation o) { organisationer.remove(o); }
