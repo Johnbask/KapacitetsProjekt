@@ -80,6 +80,9 @@ public class Medarbejder {
         this.team = team;
     }
 
+
+    // TODO: SØGNING INTERN x EKSTERN
+
     @Override
     public String toString() {
         return "Medarbejder: " + initialer + ", " + navn + ", " + type + ", " + stilling;
