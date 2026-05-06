@@ -24,68 +24,58 @@ public class Medarbejder {
         this.team = team;
     }
 
-    // Getters
     public String getInitialer() {
         return initialer;
+    }
+    public void setInitialer(String initialer) {
+        this.initialer = initialer;
     }
 
     public String getNavn() {
         return navn;
     }
+    public void setNavn(String navn) {
+        this.navn = navn;
+    }
 
     public MedarbejderType getType() {
         return type;
+    }
+    public void setType(MedarbejderType type) {
+        this.type = type;
     }
 
     public String getStilling() {
         return stilling;
     }
+    public void setStilling(String stilling) {
+        this.stilling = stilling;
+    }
 
     public boolean isFratrådt() {
         return fratrådt;
+    }
+    public void setFratrådt(boolean fratrådt) {
+        this.fratrådt = fratrådt;
     }
 
     public Afdeling getAfdeling() {
         return afdeling;
     }
+    public void setAfdeling(Afdeling afdeling) {
+        this.afdeling = afdeling;
+    }
 
     public Organisation getOrganisation() {
         return organisation;
+    }
+    public void setOrganisation(Organisation organisation) {
+        this.organisation = organisation;
     }
 
     public Team getTeam() {
         return team;
     }
-
-    // Setters
-    public void setInitialer(String initialer) {
-        this.initialer = initialer;
-    }
-
-    public void setNavn(String navn) {
-        this.navn = navn;
-    }
-
-    public void setType(MedarbejderType type) {
-        this.type = type;
-    }
-
-    public void setStilling(String stilling) {
-        this.stilling = stilling;
-    }
-
-    public void setFratrådt(boolean fratrådt) {
-        this.fratrådt = fratrådt;
-    }
-
-    public void setAfdeling(Afdeling afdeling) {
-        this.afdeling = afdeling;
-    }
-
-    public void setOrganisation(Organisation organisation) {
-        this.organisation = organisation;
-    }
-
     public void setTeam(Team team) {
         this.team = team;
     }

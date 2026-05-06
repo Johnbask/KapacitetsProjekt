@@ -7,15 +7,14 @@ import java.util.ArrayList;
 public class Projekt {
     private int projektId;
     private String navn;
-    private ØkonomiType økonomiType;
     // Associations
     private ArrayList<Fase> faser = new ArrayList<>();
     private ArrayList<RessourceBehov> ressourceBehov = new ArrayList<>();
+    private ArrayList<Allokering> allokeringer = new ArrayList<>();
 
     public Projekt(int projektId, String navn, ØkonomiType økonomiType) {
         this.projektId = projektId;
         this.navn = navn;
-        this.økonomiType = økonomiType;
     }
 
     // Getters
@@ -27,16 +26,16 @@ public class Projekt {
         return navn;
     }
 
-    public ØkonomiType getØkonomiType() {
-        return økonomiType;
-    }
-
     public ArrayList<Fase> getFaser() {
         return faser;
     }
 
     public ArrayList<RessourceBehov> getRessourceBehov() {
         return ressourceBehov;
+    }
+
+    public ArrayList<Allokering> getAllokeringer() {
+        return allokeringer;
     }
 
     // Setters
@@ -48,10 +47,6 @@ public class Projekt {
         this.navn = navn;
     }
 
-    public void setØkonomiType(ØkonomiType økonomiType) {
-        this.økonomiType = økonomiType;
-    }
-
     public void setFaser(ArrayList<Fase> faser) {
         this.faser = faser;
     }
@@ -60,17 +55,26 @@ public class Projekt {
         this.ressourceBehov = ressourceBehov;
     }
 
+    public void setAllokeringer(ArrayList<Allokering> allokeringer) {
+        this.allokeringer = allokeringer;
+    }
+
     // Hjælpemetoder
     public void addFase(Fase f) {
         if (!faser.contains(f)) faser.add(f);
     }
+    public void deleteFase(Fase f) { faser.remove(f); }
 
     public void addRessourceBehov(RessourceBehov r) {
         if (!ressourceBehov.contains(r)) ressourceBehov.add(r);
     }
+    public void deleteRessourceBehov(RessourceBehov r) { ressourceBehov.remove(r); }
+
+    public void addAllokering(Allokering a) { if (!allokeringer.contains(a)) allokeringer.add(a); }
+    public void deleteAllokering(Allokering a) { allokeringer.remove(a); }
 
     @Override
     public String toString() {
-        return "Projekt: " + projektId + ", " + navn + ", " + økonomiType;
+        return "Projekt: " + projektId + ", " + navn;
     }
 }
