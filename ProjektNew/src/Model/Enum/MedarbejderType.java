@@ -1,6 +1,6 @@
 package Model.Enum;
 
 public enum MedarbejderType {
-    intern,
-    ekstern
+    INTERN,
+    EKSTERN
 }

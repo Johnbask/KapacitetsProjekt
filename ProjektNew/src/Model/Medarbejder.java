@@ -24,6 +24,7 @@ public class Medarbejder {
         this.team = team;
     }
 
+    // Getters
     public String getInitialer() {
         return initialer;
     }
@@ -56,8 +57,41 @@ public class Medarbejder {
         return team;
     }
 
+    // Setters
+    public void setInitialer(String initialer) {
+        this.initialer = initialer;
+    }
+
+    public void setNavn(String navn) {
+        this.navn = navn;
+    }
+
+    public void setType(MedarbejderType type) {
+        this.type = type;
+    }
+
+    public void setStilling(String stilling) {
+        this.stilling = stilling;
+    }
+
+    public void setFratrådt(boolean fratrådt) {
+        this.fratrådt = fratrådt;
+    }
+
+    public void setAfdeling(Afdeling afdeling) {
+        this.afdeling = afdeling;
+    }
+
+    public void setOrganisation(Organisation organisation) {
+        this.organisation = organisation;
+    }
+
+    public void setTeam(Team team) {
+        this.team = team;
+    }
+
     @Override
     public String toString() {
-        return navn;
+        return "Medarbejder: " + initialer + ", " + navn + ", " + type + ", " + stilling;
     }
 }

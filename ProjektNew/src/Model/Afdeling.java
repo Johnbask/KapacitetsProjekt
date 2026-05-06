@@ -19,6 +19,7 @@ public class Afdeling {
         this.økonomiType = økonomiType;
     }
 
+    // Getters
     public int getAfdId() {
         return afdId;
     }
@@ -37,5 +38,31 @@ public class Afdeling {
 
     public ArrayList<Medarbejder> getMedarbejdere() {
         return medarbejdere;
+    }
+
+    // Setters
+    public void setAfdId(int afdId) {
+        this.afdId = afdId;
+    }
+
+    public void setNavn(String navn) {
+        this.navn = navn;
+    }
+
+    public void setLeder(String leder) {
+        this.leder = leder;
+    }
+
+    public void setØkonomiType(ØkonomiType økonomiType) {
+        this.økonomiType = økonomiType;
+    }
+
+    public void setMedarbejdere(ArrayList<Medarbejder> medarbejdere) {
+        this.medarbejdere = medarbejdere;
+    }
+
+    @Override
+    public String toString() {
+        return "Afdeling: " + afdId + ", " + navn + ", " + leder + ", " + økonomiType;
     }
 }
