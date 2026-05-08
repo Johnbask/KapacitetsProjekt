@@ -69,7 +69,8 @@ public class Controller {
     =========================
     */
 
-    public void createMedarbejder(int medId, String initialer, String navn, MedarbejderType type, String stilling, boolean fratrådt, int afdId, int orgId, int teamId) throws SQLException {
+    public void createMedarbejder(int medId, String initialer, String navn, MedarbejderType type,
+                                  String stilling, boolean fratrådt, int afdId, int orgId, int teamId) throws SQLException {
         Afdeling afdeling = dbAfdeling.readById(afdId);
         Organisation organisation = dbOrganisation.readById(orgId);
         Team team = dbTeam.readById(teamId);
