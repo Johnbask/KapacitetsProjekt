@@ -3,17 +3,20 @@ package Model;
 import Model.Enum.MedarbejderType;
 
 public class Medarbejder {
+    private int medId;
     private String initialer;
     private String navn;
     private MedarbejderType type;
     private String stilling;
     private boolean fratrådt;
+    // Associations
     private Afdeling afdeling;
     private Organisation organisation;
     private Team team;
 
-    public Medarbejder(String initialer, String navn, MedarbejderType type, String stilling,
+    public Medarbejder(int medId, String initialer, String navn, MedarbejderType type, String stilling,
                        boolean fratrådt, Afdeling afdeling, Organisation organisation, Team team) {
+        this.medId = medId;
         this.initialer = initialer;
         this.navn = navn;
         this.type = type;
@@ -22,6 +25,13 @@ public class Medarbejder {
         this.afdeling = afdeling;
         this.organisation = organisation;
         this.team = team;
+    }
+
+    public int getMedId() {
+        return medId;
+    }
+    public void setMedId(int medId) {
+        this.medId = medId;
     }
 
     public String getInitialer() {
@@ -85,6 +95,6 @@ public class Medarbejder {
 
     @Override
     public String toString() {
-        return "Medarbejder: " + initialer + ", " + navn + ", " + type + ", " + stilling;
+        return "Medarbejder: " + medId + ", " + initialer + ", " + navn + ", " + type + ", " + stilling + ", " + fratrådt + ", " + afdeling + ", " + organisation + ", " + team;
     }
 }

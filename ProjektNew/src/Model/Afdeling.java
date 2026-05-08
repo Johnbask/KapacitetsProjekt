@@ -1,7 +1,5 @@
 package Model;
 
-import Model.Enum.ØkonomiType;
-
 import java.util.ArrayList;
 
 public class Afdeling {
@@ -52,6 +50,6 @@ public class Afdeling {
 
     @Override
     public String toString() {
-        return "Afdeling: " + afdId + ", " + navn + ", " + leder;
+        return "Afdeling: (" + afdId + ", " + navn + ", " + leder + ")";
     }
 }
