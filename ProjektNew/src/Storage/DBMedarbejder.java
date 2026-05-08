@@ -81,35 +81,7 @@ public class DBMedarbejder {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                Afdeling afd = new Afdeling(
-                        rs.getInt("afdId"),
-                        rs.getString("afdNavn"),
-                        rs.getString("leder")
-                );
-
-                Organisation org = new Organisation(
-                        rs.getInt("orgId"),
-                        rs.getString("orgNavn")
-                );
-
-                Team team = new Team(
-                        rs.getInt("teamId"),
-                        rs.getString("teamNavn")
-                );
-
-                Medarbejder medarbejder = new Medarbejder(
-                        rs.getInt("medId"),
-                        rs.getString("initialer"),
-                        rs.getString("navn"),
-                        MedarbejderType.valueOf(rs.getString("medarbejderType")),
-                        rs.getString("stilling"),
-                        rs.getBoolean("fratrådt"),
-                        afd,
-                        org,
-                        team
-                );
-
-                medarbejdere.add(medarbejder);
+                medarbejdere.add(HelperMethod(rs));
             }
 
         } catch (SQLException e) {
@@ -154,34 +126,7 @@ public class DBMedarbejder {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    Afdeling afd = new Afdeling(
-                            rs.getInt("afdId"),
-                            rs.getString("afdNavn"),
-                            rs.getString("leder")
-                    );
-
-                    Organisation org = new Organisation(
-                            rs.getInt("orgId"),
-                            rs.getString("orgNavn")
-                    );
-
-                    Team team = new Team(
-                            rs.getInt("teamId"),
-                            rs.getString("teamNavn")
-                    );
-
-                    medarbejder = new Medarbejder(
-                            rs.getInt("medId"),
-                            rs.getString("initialer"),
-                            rs.getString("navn"),
-                            MedarbejderType.valueOf(rs.getString("medarbejderType")),
-                            rs.getString("stilling"),
-                            rs.getBoolean("fratrådt"),
-                            afd,
-                            org,
-                            team
-                    );
-
+                   medarbejder = HelperMethod(rs);
                 } else {
                     System.out.println("Ingen medarbejder fundet med id: " + medId);
                 }
@@ -267,6 +212,36 @@ public class DBMedarbejder {
         } catch (Exception e) {
             System.out.println("Uventet fejl: " + e.getMessage());
         }
+    }
+
+    private Medarbejder HelperMethod(ResultSet rs) throws SQLException {
+        Afdeling afd = new Afdeling(
+                rs.getInt("afdId"),
+                rs.getString("afdNavn"),
+                rs.getString("leder")
+        );
+
+        Organisation org = new Organisation(
+                rs.getInt("orgId"),
+                rs.getString("orgNavn")
+        );
+
+        Team team = new Team(
+                rs.getInt("teamId"),
+                rs.getString("teamNavn")
+        );
+
+        return new Medarbejder(
+                rs.getInt("medId"),
+                rs.getString("initialer"),
+                rs.getString("navn"),
+                MedarbejderType.valueOf(rs.getString("medarbejderType")),
+                rs.getString("stilling"),
+                rs.getBoolean("fratrådt"),
+                afd,
+                org,
+                team
+        );
     }
 
     private void handleSQLException(SQLException e) {
