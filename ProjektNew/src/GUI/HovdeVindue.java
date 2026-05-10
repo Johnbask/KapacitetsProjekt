@@ -42,18 +42,17 @@ private HovdeVindue hovdeVindue;
         Tab tabMedarbejderOversigt = new Tab("Medarbejder oversigt.");
         Tab tabProjektOversigt = new Tab("Projekt oversigt.");
         Tab tabBehovOversigt = new Tab("Behov oversigt.");
-        Tab tabTeamOversigt = new Tab("Team oversigt.");
 
         // forbindelse til tabs
-
-
+        MedarbejderOversigt medarbejderPane = new MedarbejderOversigt();
+        tabMedarbejderOversigt.setContent(medarbejderPane);
 
 
         // Tilføjelse af tabs
         tabPane.getTabs().add(tabBehovOversigt);
         tabPane.getTabs().add(tabMedarbejderOversigt);
         tabPane.getTabs().add(tabProjektOversigt);
-        tabPane.getTabs().add(tabTeamOversigt);
+
 
 
 
