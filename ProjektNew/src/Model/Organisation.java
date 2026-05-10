@@ -41,6 +41,6 @@ public class Organisation {
 
     @Override
     public String toString() {
-        return "(" + orgId + "), " + navn;
+        return "Organisation: (" + orgId + ", " + navn + ")";
     }
 }
