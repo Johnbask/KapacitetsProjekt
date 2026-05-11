@@ -112,17 +112,77 @@ public class DBProjekt extends DBCRUD<Projekt> {
 
     @Override
     public void update(Projekt projekt) throws SQLException {
+        String query = "";
 
+        Connection minConnection;
+
+        try {
+            minConnection = DriverManager.getConnection(URLJohn);
+            System.out.println("Connected to John");
+
+            PreparedStatement pstmt = minConnection.prepareStatement(query);
+
+            pstmt.setInt(1, projekt.getProjektId());
+            pstmt.setString(2, projekt.getNavn());
+
+            int rows = pstmt.executeUpdate();
+
+            if (rows > 0) {
+                System.out.println("Projekt opdateret korrekt!");
+            } else {
+                System.out.println("Ingen projekter fundet med id: " + projekt.getProjektId());
+            }
+        } catch (SQLException e) {
+            handleSQLException(e);
+
+            minConnection = DriverManager.getConnection(URLLasse);
+            System.out.println("Connected to Lasse");
+        } catch (Exception e) {
+            System.out.println("Uventet fejl: " + e.getMessage());
+        }
     }
 
     @Override
     public void delete(int id) throws SQLException {
+        String query = "";
 
+        Connection minConnection;
+
+        try {
+            minConnection = DriverManager.getConnection(URLJohn);
+            System.out.println("Connected to John");
+
+            PreparedStatement pstmt = minConnection.prepareStatement(query);
+
+            pstmt.setInt(1, id);
+
+            int rows = pstmt.executeUpdate();
+
+            if (rows > 0) {
+                System.out.println("Projekt deleted korrekt!");
+            } else {
+                System.out.println("Noget gik galt - ingen data deleted.");
+            }
+        } catch (SQLException e) {
+            handleSQLException(e);
+            minConnection = DriverManager.getConnection(URLLasse);
+            System.out.println("Connected to Lasse");
+        } catch (Exception e) {
+            System.out.println("Uventet fejl: " + e.getMessage());
+        }
     }
 
     @Override
     protected void handleSQLException(SQLException e) {
-        super.handleSQLException(e);
+        System.out.println("Fejl: " + e.getMessage());
+        System.out.println("Fejlkode: " + e.getErrorCode());
+
+        String besked = switch (e.getErrorCode()) {
+            case 2627 -> "projektId findes allerede (duplikat-fejl)";
+            default -> "Ukendt fejl [" + e.getErrorCode() + "]: " + e.getMessage();
+        };
+
+        System.out.println("Fejl: " + besked);
     }
 
     private Projekt helperMethod(ResultSet rs) throws SQLException {
