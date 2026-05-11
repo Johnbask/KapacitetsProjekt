@@ -4,7 +4,6 @@ import Model.Enum.MedarbejderType;
 import Storage.DBMedarbejder;
 
 import java.sql.SQLException;
-import java.time.LocalDate;
 
 public class App {
     public static void main(String[] args) throws SQLException {

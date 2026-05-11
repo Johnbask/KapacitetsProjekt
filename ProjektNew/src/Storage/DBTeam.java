@@ -64,12 +64,11 @@ public class DBTeam extends DBCRUD<Team> {
         Team team = null;
 
         try (Connection minConnection = getConnection();
-             PreparedStatement pstmt = minConnection.prepareStatement(query);
-             ResultSet rs = pstmt.executeQuery()) {
+             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
             pstmt.setInt(1, id);
 
-            try (rs) {
+            try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     team = helperMethod(rs);
                 } else {
@@ -89,13 +88,13 @@ public class DBTeam extends DBCRUD<Team> {
 
     @Override
     public void update(Team team) throws SQLException {
-        String query = "UPDATE Team SET teamId = ?, navn = ? WHERE teamId = ?";
+        String query = "UPDATE Team SET navn = ? WHERE teamId = ?";
 
         try (Connection minConnection = getConnection();
              PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
-            pstmt.setInt(1, team.getTeamId());
-            pstmt.setString(2, team.getNavn());
+            pstmt.setString(1, team.getNavn());
+            pstmt.setInt(2, team.getTeamId());
 
             int rows = pstmt.executeUpdate();
 
@@ -152,6 +151,7 @@ public class DBTeam extends DBCRUD<Team> {
 
         String besked = switch (e.getErrorCode()) {
             case 2627 -> "teamId findes allerede (Duplikat-fejl)";
+            case 547 -> "Kan ikke slette team - medarbejder er stadig tilknyttet (FK-Fejl)";
             default -> "Ukendt fejl [" + e.getErrorCode() + "]: " + e.getMessage();
         };
         System.out.println("Fejl: " + besked);

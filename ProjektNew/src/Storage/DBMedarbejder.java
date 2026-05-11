@@ -6,35 +6,37 @@ import Model.Medarbejder;
 import Model.Organisation;
 import Model.Team;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 public class DBMedarbejder extends DBCRUD<Medarbejder> {
-
-    public void insert(Medarbejder medarbejder) throws SQLException {
-        String felter = "(medId, initialer, navn, medarbejderType, stilling, fratrådt, afdId, orgId, teamId)";
-        String values = "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        String query = "INSERT INTO Medarbejder " + felter + values;
+    @Override
+    public void insert(Medarbejder m) throws SQLException {
+        String query = "INSERT INTO Medarbejder (medId, initialer, navn, medarbejderType, stilling, fratrådt, afdId, orgId, teamId) " +
+                "VALUES (?, ?, ?, ?, ?, ? ,? ,?, ?)";
 
         try (Connection minConnection = getConnection();
              PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
-            pstmt.setInt(1, medarbejder.getMedId());
-            pstmt.setString(2, medarbejder.getInitialer());
-            pstmt.setString(3, medarbejder.getNavn());
-            pstmt.setString(4, medarbejder.getType().name()); // 'INTERN' eller 'EKSTERN'
-            pstmt.setString(5, medarbejder.getStilling());
-            pstmt.setBoolean(6, medarbejder.isFratrådt());
-            pstmt.setInt(7, medarbejder.getAfdeling().getAfdId());
-            pstmt.setInt(8, medarbejder.getOrganisation().getOrgId());
-            pstmt.setInt(9, medarbejder.getTeam().getTeamId());
+            pstmt.setInt(1, m.getMedId());
+            pstmt.setString(2, m.getInitialer());
+            pstmt.setString(3, m.getNavn());
+            pstmt.setString(4, m.getType().name());
+            pstmt.setString(5, m.getStilling());
+            pstmt.setBoolean(6, m.isFratrådt());
+            pstmt.setInt(7, m.getAfdeling().getAfdId());
+            pstmt.setInt(8, m.getOrganisation().getOrgId());
+            pstmt.setInt(9, m.getTeam().getTeamId());
 
             int rows = pstmt.executeUpdate();
 
             if (rows > 0) {
                 System.out.println("Medarbejder indsat korrekt!");
             } else {
-                System.out.println("Noget gik galt - ingen data indsat.");
+                System.out.println("Noget gik galt - Ingen data indsat");
             }
 
         } catch (SQLException e) {
@@ -45,30 +47,25 @@ public class DBMedarbejder extends DBCRUD<Medarbejder> {
         }
     }
 
+    @Override
     public ArrayList<Medarbejder> readAll() throws SQLException {
-        String medarbejderFelter =  "m.medId, m.initialer, m.navn, m.medarbejderType, m.stilling, CASE WHEN m.fratrådt = 1 THEN 'True' ELSE 'False' END AS fratrådt, ";
-        String afdelingFelter =     "a.afdId, a.navn AS afdNavn, a.leder, ";
-        String organisationFelter = "o.orgId, o.navn AS orgNavn, ";
-        String teamFelter =         "t.teamId, t.navn AS teamNavn ";
+        String query = "SELECT m.medId, m.initialer, m.navn, m.medarbejderType, m.stilling, m.fratrådt, " +
+                "m.afdId, a.navn AS afdNavn, a.leder, " +
+                "m.orgId, o.navn AS orgNavn, " +
+                "m.teamId, t.navn AS teamNavn " +
+                "FROM Medarbejder m " +
+                "LEFT JOIN Afdeling a ON m.afdId = a.afdId " +
+                "LEFT JOIN Organisation o ON m.orgId = o.orgId " +
+                "LEFT JOIN Team t ON m.teamId = t.teamId";
 
-        String innerJoinAfd = "INNER JOIN Afdeling a ON m.afdId = a.afdId ";
-        String innerJoinOrg = "INNER JOIN Organisation o ON m.orgId = o.orgId ";
-        String innerJoinTeam = "INNER JOIN Team t ON m.teamId = t.teamid";
-
-        String query = "SELECT " + medarbejderFelter + afdelingFelter + organisationFelter + teamFelter
-                + " FROM Medarbejder m "
-                + innerJoinAfd
-                + innerJoinOrg
-                + innerJoinTeam;
-
-        ArrayList<Medarbejder> medarbejdere = new ArrayList<>();
+        ArrayList<Medarbejder> liste = new ArrayList<>();
 
         try (Connection minConnection = getConnection();
              PreparedStatement pstmt = minConnection.prepareStatement(query);
              ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
-                medarbejdere.add(HelperMethod(rs));
+                liste.add(helperMethod(rs));
             }
 
         } catch (SQLException e) {
@@ -78,38 +75,33 @@ public class DBMedarbejder extends DBCRUD<Medarbejder> {
             e.printStackTrace();
         }
 
-        return medarbejdere;
+        return liste;
     }
 
-    public Medarbejder readById(int medId) throws SQLException {
-        String medarbejderFelter =  "m.medId, m.initialer, m.navn, m.medarbejderType, m.stilling, CASE WHEN m.fratrådt = 1 THEN 'True' ELSE 'False' END AS fratrådt, ";
-        String afdelingFelter =     "a.afdId, a.navn AS afdNavn, a.leder, ";
-        String organisationFelter = "o.orgId, o.navn AS orgNavn, ";
-        String teamFelter =         "t.teamId, t.navn AS teamNavn ";
+    @Override
+    public Medarbejder readById(int id) throws SQLException {
+        String query = "SELECT m.medId, m.initialer, m.navn, m.medarbejderType, m.stilling, m.fratrådt, " +
+                "m.afdId, a.navn AS afdNavn, a.leder, " +
+                "m.orgId, o.navn AS orgNavn, " +
+                "m.teamId, t.navn AS teamNavn " +
+                "FROM Medarbejder m " +
+                "LEFT JOIN Afdeling a ON m.afdId = a.afdId " +
+                "LEFT JOIN Organisation o ON m.orgId = o.orgId " +
+                "LEFT JOIN Team t ON m.teamId = t.teamId " +
+                "WHERE m.medId = ?";
 
-        String innerJoinAfd = "INNER JOIN Afdeling a ON m.afdId = a.afdId ";
-        String innerJoinOrg = "INNER JOIN Organisation o ON m.orgId = o.orgId ";
-        String innerJoinTeam = "INNER JOIN Team t ON m.teamId = t.teamid ";
-
-        String query = "SELECT " + medarbejderFelter + afdelingFelter + organisationFelter + teamFelter
-                + " FROM Medarbejder m "
-                + innerJoinAfd
-                + innerJoinOrg
-                + innerJoinTeam
-                + "WHERE m.medId = ?";
-
-        Medarbejder medarbejder = null;
+        Medarbejder m = null;
 
         try (Connection minConnection = getConnection();
              PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
-            pstmt.setInt(1, medId);
+            pstmt.setInt(1, id);
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                   medarbejder = HelperMethod(rs);
+                    m = helperMethod(rs);
                 } else {
-                    System.out.println("Ingen medarbejder fundet med id: " + medId);
+                    System.out.println("Ingen medarbejder funder med id: " + id);
                 }
             }
 
@@ -120,33 +112,35 @@ public class DBMedarbejder extends DBCRUD<Medarbejder> {
             e.printStackTrace();
         }
 
-        return medarbejder;
+        return m;
     }
 
+    @Override
     public void update(Medarbejder medarbejder) throws SQLException {
-        String felter = "initialer = ?, navn = ?, medarbejderType = ?, stilling = ?," +
-                        " fratrådt = ?, afdId = ?, orgId = ?, teamId = ? ";
-        String query = "UPDATE Medarbejder SET " + felter + "WHERE medId = ?";
+        String query = "UPDATE Medarbejder " +
+                "SET initialer = ?, navn = ?, medarbejderType = ?, stilling = ?, fratrådt = ?, " +
+                "afdId = ?, orgId = ?, teamId = ? " +
+                "WHERE medId = ?";
 
         try (Connection minConnection = getConnection();
              PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
-            pstmt.setInt(1, medarbejder.getMedId());
-            pstmt.setString(2, medarbejder.getInitialer());
-            pstmt.setString(3, medarbejder.getNavn());
-            pstmt.setString(4, medarbejder.getType().name()); // 'INTERN' eller 'EKSTERN'
-            pstmt.setString(5, medarbejder.getStilling());
-            pstmt.setBoolean(6, medarbejder.isFratrådt());
-            pstmt.setInt(7, medarbejder.getAfdeling().getAfdId());
-            pstmt.setInt(8, medarbejder.getOrganisation().getOrgId());
-            pstmt.setInt(9, medarbejder.getTeam().getTeamId());
+            pstmt.setString(1, medarbejder.getInitialer());
+            pstmt.setString(2, medarbejder.getNavn());
+            pstmt.setString(3, medarbejder.getType().name());
+            pstmt.setString(4, medarbejder.getStilling());
+            pstmt.setBoolean(5, medarbejder.isFratrådt());
+            pstmt.setInt(6, medarbejder.getAfdeling().getAfdId());
+            pstmt.setInt(7, medarbejder.getOrganisation().getOrgId());
+            pstmt.setInt(8, medarbejder.getTeam().getTeamId());
+            pstmt.setInt(9, medarbejder.getMedId());
 
             int rows = pstmt.executeUpdate();
 
             if (rows > 0) {
                 System.out.println("Medarbejder opdateret korrekt!");
             } else {
-                System.out.println("Ingen medarbejder fundet med id: " + medarbejder.getMedId());
+                System.out.println("Noget gik galt - Ingen data opdateret");
             }
 
         } catch (SQLException e) {
@@ -157,20 +151,21 @@ public class DBMedarbejder extends DBCRUD<Medarbejder> {
         }
     }
 
-    public void delete(int medId) throws SQLException {
+    @Override
+    public void delete(int id) throws SQLException {
         String query = "DELETE FROM Medarbejder WHERE medId = ?";
 
         try (Connection minConnection = getConnection();
              PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
-            pstmt.setInt(1, medId);
+            pstmt.setInt(1, id);
 
             int rows = pstmt.executeUpdate();
 
-            if (rows < 0) {
+            if (rows > 0) {
                 System.out.println("Medarbejder slettet korrekt!");
             } else {
-                System.out.println("Ingen medarbejder fundet med id: " + medId);
+                System.out.println("Noget gik galt - Ingen data slettet");
             }
 
         } catch (SQLException e) {
@@ -181,14 +176,19 @@ public class DBMedarbejder extends DBCRUD<Medarbejder> {
         }
     }
 
-    private Medarbejder HelperMethod(ResultSet rs) throws SQLException {
-        Afdeling afd = new Afdeling(
+    @Override
+    protected void handleSQLException(SQLException e) {
+        super.handleSQLException(e);
+    }
+
+    private Medarbejder helperMethod(ResultSet rs) throws SQLException {
+        Afdeling afdeling = new Afdeling(
                 rs.getInt("afdId"),
                 rs.getString("afdNavn"),
                 rs.getString("leder")
         );
 
-        Organisation org = new Organisation(
+        Organisation organisation = new Organisation(
                 rs.getInt("orgId"),
                 rs.getString("orgNavn")
         );
@@ -199,29 +199,15 @@ public class DBMedarbejder extends DBCRUD<Medarbejder> {
         );
 
         return new Medarbejder(
-                rs.getInt("medId"),
-                rs.getString("initialer"),
-                rs.getString("navn"),
+          rs.getInt("medId"),
+          rs.getString("initialer"),
+          rs.getString("navn"),
                 MedarbejderType.valueOf(rs.getString("medarbejderType")),
-                rs.getString("stilling"),
-                rs.getBoolean("fratrådt"),
-                afd,
-                org,
+          rs.getString("stilling"),
+          rs.getBoolean("fratrådt"),
+                afdeling,
+                organisation,
                 team
         );
-    }
-
-    @Override
-    protected void handleSQLException(SQLException e) {
-        System.out.println("Fejl: " + e.getMessage());
-        System.out.println("Fejlkode: " + e.getErrorCode());
-
-        String besked = switch (e.getErrorCode()) {
-            case 2627 -> "medId findes allerede (duplikat-fejl)";
-            case 547 -> "FK-Fejl: tjek afdeling, organisation og team eller tjek at medarbejderType enden er 'INTERN' eller 'EKSTERN'";
-            default -> "Ukendt fejl [" + e.getErrorCode() + "]: " + e.getMessage();
-        };
-
-        System.out.println("Fejl: " + besked);
     }
 }

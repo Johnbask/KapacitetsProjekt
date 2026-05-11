@@ -87,13 +87,13 @@ public class DBProjekt extends DBCRUD<Projekt> {
 
     @Override
     public void update(Projekt projekt) throws SQLException {
-        String query = "";
+        String query = "UPDATE Projekt SET navn = ? WHERE projektId = ?";
 
         try (Connection minConnection = getConnection();
              PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
-            pstmt.setInt(1, projekt.getProjektId());
-            pstmt.setString(2, projekt.getNavn());
+            pstmt.setString(1, projekt.getNavn());
+            pstmt.setInt(2, projekt.getProjektId());
 
             int rows = pstmt.executeUpdate();
 
@@ -102,6 +102,7 @@ public class DBProjekt extends DBCRUD<Projekt> {
             } else {
                 System.out.println("Ingen projekter fundet med id: " + projekt.getProjektId());
             }
+
         } catch (SQLException e) {
             handleSQLException(e);
         } catch (Exception e) {
@@ -112,7 +113,7 @@ public class DBProjekt extends DBCRUD<Projekt> {
 
     @Override
     public void delete(int id) throws SQLException {
-        String query = "";
+        String query = "DELETE FROM Projekt WHERE projektId = ?";
 
         try (Connection minConnection = getConnection();
              PreparedStatement pstmt = minConnection.prepareStatement(query)) {
@@ -141,6 +142,7 @@ public class DBProjekt extends DBCRUD<Projekt> {
 
         String besked = switch (e.getErrorCode()) {
             case 2627 -> "projektId findes allerede (duplikat-fejl)";
+            case 547 -> "Kan ikke slette projekt - tilknyttet ressourceBehov (FK-fejl)";
             default -> "Ukendt fejl [" + e.getErrorCode() + "]: " + e.getMessage();
         };
 

@@ -32,7 +32,5 @@ public abstract class DBCRUD<T> {
 
     public abstract void delete(int id) throws SQLException;
 
-    protected void handleSQLException(SQLException e) {
-
-    };
+    protected void handleSQLException(SQLException e) {};
 }

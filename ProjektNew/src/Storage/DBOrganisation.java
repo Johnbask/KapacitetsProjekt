@@ -88,13 +88,13 @@ public class DBOrganisation extends DBCRUD<Organisation> {
 
     @Override
     public void update(Organisation organisation) throws SQLException {
-        String query = "UPDATE Organisation SET orgId = ?, navn = ? WHERE orgId = ?";
+        String query = "UPDATE Organisation SET navn = ? WHERE orgId = ?";
 
         try (Connection minConnection = getConnection();
              PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
-            pstmt.setInt(1, organisation.getOrgId());
-            pstmt.setString(2, organisation.getNavn());
+            pstmt.setString(1, organisation.getNavn());
+            pstmt.setInt(2, organisation.getOrgId());
 
             int rows = pstmt.executeUpdate();
 
@@ -144,6 +144,7 @@ public class DBOrganisation extends DBCRUD<Organisation> {
 
         String besked = switch (e.getErrorCode()) {
             case 2627 -> "orgId findes allerede (Duplikat-fejl)";
+            case 547 -> "Kan ikke slette organisation - medarbejdere er stadig tilknyttet (FK-fejl)";
             default -> "Ukendt fejl [" + e.getErrorCode() + "]: " + e.getMessage();
         };
 
