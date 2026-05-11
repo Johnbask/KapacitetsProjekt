@@ -9,22 +9,15 @@ import Model.Team;
 import java.sql.*;
 import java.util.ArrayList;
 
-public class DBMedarbejder {
-    private static final String URLJohn = "jdbc:sqlserver://JOHN_LYSPRO\\SQLEXPRESS;databaseName=KapacitetsProjekt;user=sa;password=Frodo3125;";
-    private static final String URLLasse = "jdbc:sqlserver://JOHN_LYSPRO\\SQLEXPRESS;databaseName=KapacitetsProjekt;user=sa;password=Frodo3125;";
+public class DBMedarbejder extends DBCRUD<Medarbejder> {
 
     public void insert(Medarbejder medarbejder) throws SQLException {
         String felter = "(medId, initialer, navn, medarbejderType, stilling, fratrådt, afdId, orgId, teamId)";
         String values = "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         String query = "INSERT INTO Medarbejder " + felter + values;
 
-        Connection minConnection;
-
-        try {
-            minConnection = DriverManager.getConnection(URLJohn);
-            System.out.println("Connected to John");
-
-            PreparedStatement pstmt = minConnection.prepareStatement(query);
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
             pstmt.setInt(1, medarbejder.getMedId());
             pstmt.setString(2, medarbejder.getInitialer());
@@ -46,11 +39,9 @@ public class DBMedarbejder {
 
         } catch (SQLException e) {
             handleSQLException(e);
-
-            minConnection = DriverManager.getConnection(URLLasse);
-            System.out.println("Connected to Lasse");
         } catch (Exception e) {
             System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -72,13 +63,9 @@ public class DBMedarbejder {
 
         ArrayList<Medarbejder> medarbejdere = new ArrayList<>();
 
-        Connection minConnection;
-        try {
-            minConnection = DriverManager.getConnection(URLJohn);
-            System.out.println("Connected to John");
-
-            PreparedStatement pstmt = minConnection.prepareStatement(query);
-            ResultSet rs = pstmt.executeQuery();
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query);
+             ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
                 medarbejdere.add(HelperMethod(rs));
@@ -86,11 +73,9 @@ public class DBMedarbejder {
 
         } catch (SQLException e) {
             handleSQLException(e);
-
-            minConnection = DriverManager.getConnection(URLLasse);
-            System.out.println("Connected to Lasse");
         } catch (Exception e) {
             System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return medarbejdere;
@@ -115,12 +100,8 @@ public class DBMedarbejder {
 
         Medarbejder medarbejder = null;
 
-        Connection minConnection;
-        try {
-            minConnection = DriverManager.getConnection(URLJohn);
-            System.out.println("Connected to John");
-
-            PreparedStatement pstmt = minConnection.prepareStatement(query);
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
             pstmt.setInt(1, medId);
 
@@ -134,11 +115,9 @@ public class DBMedarbejder {
 
         } catch (SQLException e) {
             handleSQLException(e);
-
-            minConnection = DriverManager.getConnection(URLLasse);
-            System.out.println("Connected to Lasse");
         } catch (Exception e) {
             System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return medarbejder;
@@ -149,12 +128,8 @@ public class DBMedarbejder {
                         " fratrådt = ?, afdId = ?, orgId = ?, teamId = ? ";
         String query = "UPDATE Medarbejder SET " + felter + "WHERE medId = ?";
 
-        Connection minConnection;
-        try {
-            minConnection = DriverManager.getConnection(URLJohn);
-            System.out.println("Connected to John");
-
-            PreparedStatement pstmt = minConnection.prepareStatement(query);
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
             pstmt.setInt(1, medarbejder.getMedId());
             pstmt.setString(2, medarbejder.getInitialer());
@@ -176,23 +151,17 @@ public class DBMedarbejder {
 
         } catch (SQLException e) {
             handleSQLException(e);
-
-            minConnection = DriverManager.getConnection(URLLasse);
-            System.out.println("Connected to Lasse");
         } catch (Exception e) {
             System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
     public void delete(int medId) throws SQLException {
         String query = "DELETE FROM Medarbejder WHERE medId = ?";
 
-        Connection minConnection;
-        try {
-            minConnection = DriverManager.getConnection(URLJohn);
-            System.out.println("Connected to John");
-
-            PreparedStatement pstmt = minConnection.prepareStatement(query);
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
             pstmt.setInt(1, medId);
 
@@ -206,11 +175,9 @@ public class DBMedarbejder {
 
         } catch (SQLException e) {
             handleSQLException(e);
-
-            minConnection = DriverManager.getConnection(URLLasse);
-            System.out.println("Connected to Lasse");
         } catch (Exception e) {
             System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -244,7 +211,8 @@ public class DBMedarbejder {
         );
     }
 
-    private void handleSQLException(SQLException e) {
+    @Override
+    protected void handleSQLException(SQLException e) {
         System.out.println("Fejl: " + e.getMessage());
         System.out.println("Fejlkode: " + e.getErrorCode());
 

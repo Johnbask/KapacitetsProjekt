@@ -1,13 +1,12 @@
 package Storage;
 
 import Model.Afdeling;
+import net.bytebuddy.build.Plugin;
 
 import java.sql.*;
 import java.util.ArrayList;
 
 public class DBAfdeling extends DBCRUD<Afdeling> {
-    private static final String URLJohn = "";
-    private static final String URLLasse = "";
 
     @Override
     public void insert(Afdeling afdeling) throws SQLException {
@@ -15,13 +14,8 @@ public class DBAfdeling extends DBCRUD<Afdeling> {
         String values = "VALUES (?, ?, ?)";
         String query = "INSERT INTO Afdeling " + felter + values;
 
-        Connection minConnection;
-
-        try {
-            minConnection = DriverManager.getConnection(URLJohn);
-            System.out.println("Connected to John");
-
-            PreparedStatement pstmt = minConnection.prepareStatement(query);
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
             pstmt.setInt(1, afdeling.getAfdId());
             pstmt.setString(2, afdeling.getNavn());
@@ -37,10 +31,9 @@ public class DBAfdeling extends DBCRUD<Afdeling> {
 
         } catch (SQLException e) {
             handleSQLException(e);
-            minConnection = DriverManager.getConnection(URLLasse);
-            System.out.println("Connected to Lasse");
         } catch (Exception e) {
             System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -50,14 +43,9 @@ public class DBAfdeling extends DBCRUD<Afdeling> {
 
         ArrayList<Afdeling> afdelinger = new ArrayList<>();
 
-        Connection minConnection;
-
-        try {
-            minConnection = DriverManager.getConnection(URLJohn);
-            System.out.println("Connected to John");
-
-            PreparedStatement pstmt = minConnection.prepareStatement(query);
-            ResultSet rs = pstmt.executeQuery();
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query);
+             ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
                 afdelinger.add(helperMethod(rs));
@@ -65,10 +53,9 @@ public class DBAfdeling extends DBCRUD<Afdeling> {
 
         } catch (SQLException e) {
             handleSQLException(e);
-            minConnection = DriverManager.getConnection(URLLasse);
-            System.out.println("Connected to Lasse");
         } catch (Exception e) {
             System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return afdelinger;
@@ -80,13 +67,8 @@ public class DBAfdeling extends DBCRUD<Afdeling> {
 
         Afdeling afdeling = null;
 
-        Connection minConnection;
-
-        try {
-            minConnection = DriverManager.getConnection(URLJohn);
-            System.out.println("Connected to John");
-
-            PreparedStatement pstmt = minConnection.prepareStatement(query);
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
             pstmt.setInt(1, id);
 
@@ -100,10 +82,9 @@ public class DBAfdeling extends DBCRUD<Afdeling> {
 
         } catch (SQLException e) {
             handleSQLException(e);
-            minConnection = DriverManager.getConnection(URLLasse);
-            System.out.println("Connected to Lasse");
         } catch (Exception e) {
             System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return afdeling;
@@ -113,13 +94,8 @@ public class DBAfdeling extends DBCRUD<Afdeling> {
     public void update(Afdeling afdeling) throws SQLException {
         String query = "UPDATE Afdeling SET afdId = ?, navn = ?, leder = ? WHERE afdId = ?";
 
-        Connection minConnection;
-
-        try {
-            minConnection = DriverManager.getConnection(URLJohn);
-            System.out.println("Connected to John");
-
-            PreparedStatement pstmt = minConnection.prepareStatement(query);
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
             pstmt.setInt(1, afdeling.getAfdId());
             pstmt.setString(2, afdeling.getNavn());
@@ -135,10 +111,9 @@ public class DBAfdeling extends DBCRUD<Afdeling> {
 
         } catch (SQLException e) {
             handleSQLException(e);
-            minConnection = DriverManager.getConnection(URLLasse);
-            System.out.println("Connected to Lasse");
         } catch (Exception e) {
             System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -146,13 +121,8 @@ public class DBAfdeling extends DBCRUD<Afdeling> {
     public void delete(int id) throws SQLException {
         String query = "DELETE FROM Afdeling WHERE afdId = ?";
 
-        Connection minConnection;
-
-        try {
-            minConnection = DriverManager.getConnection(URLJohn);
-            System.out.println("Connected to John");
-
-            PreparedStatement pstmt = minConnection.prepareStatement(query);
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
             pstmt.setInt(1, id);
 
@@ -166,8 +136,9 @@ public class DBAfdeling extends DBCRUD<Afdeling> {
 
         } catch (SQLException e) {
             handleSQLException(e);
-            minConnection = DriverManager.getConnection(URLLasse);
-            System.out.println("Connected to Lasse");
+        } catch (Exception e) {
+            System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

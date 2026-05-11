@@ -6,20 +6,13 @@ import java.sql.*;
 import java.util.ArrayList;
 
 public class DBOrganisation extends DBCRUD<Organisation> {
-    private static final String URLJohn = "";
-    private static final String URLLasse = "";
 
     @Override
     public void insert(Organisation organisation) throws SQLException {
         String query = "INSERT INTO Organisation (orgId, navn) VALUES (?, ?)";
 
-        Connection minConnection;
-
-        try {
-            minConnection = DriverManager.getConnection(URLJohn);
-            System.out.println("Connected to John");
-
-            PreparedStatement pstmt = minConnection.prepareStatement(query);
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
             pstmt.setInt(1, organisation.getOrgId());
             pstmt.setString(2, organisation.getNavn());
@@ -34,11 +27,9 @@ public class DBOrganisation extends DBCRUD<Organisation> {
 
         } catch (SQLException e) {
             handleSQLException(e);
-
-            minConnection = DriverManager.getConnection(URLLasse);
-            System.out.println("Connected to Lasse");
         } catch (Exception e) {
             System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -48,14 +39,9 @@ public class DBOrganisation extends DBCRUD<Organisation> {
 
         ArrayList<Organisation> organisationer = new ArrayList<>();
 
-        Connection minConnection;
-
-        try {
-            minConnection = DriverManager.getConnection(URLJohn);
-            System.out.println("Connected to John");
-
-            PreparedStatement pstmt = minConnection.prepareStatement(query);
-            ResultSet rs = pstmt.executeQuery();
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query);
+             ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
                 organisationer.add(helperMethod(rs));
@@ -63,11 +49,9 @@ public class DBOrganisation extends DBCRUD<Organisation> {
 
         } catch (SQLException e) {
             handleSQLException(e);
-
-            minConnection = DriverManager.getConnection(URLLasse);
-            System.out.println("Connected to Lasse");
         } catch (Exception e) {
             System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return organisationer;
@@ -79,13 +63,8 @@ public class DBOrganisation extends DBCRUD<Organisation> {
 
         Organisation organisation = null;
 
-        Connection minConnection;
-
-        try {
-            minConnection = DriverManager.getConnection(URLJohn);
-            System.out.println("Connected to John");
-
-            PreparedStatement pstmt = minConnection.prepareStatement(query);
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
             pstmt.setInt(1, id);
 
@@ -99,10 +78,9 @@ public class DBOrganisation extends DBCRUD<Organisation> {
 
         } catch (SQLException e) {
             handleSQLException(e);
-            minConnection = DriverManager.getConnection(URLLasse);
-            System.out.println("Connected to Lasse");
         } catch (Exception e) {
             System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return organisation;
@@ -112,13 +90,8 @@ public class DBOrganisation extends DBCRUD<Organisation> {
     public void update(Organisation organisation) throws SQLException {
         String query = "UPDATE Organisation SET orgId = ?, navn = ? WHERE orgId = ?";
 
-        Connection minConnection;
-
-        try {
-            minConnection = DriverManager.getConnection(URLJohn);
-            System.out.println("Connected to John");
-
-            PreparedStatement pstmt = minConnection.prepareStatement(query);
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
             pstmt.setInt(1, organisation.getOrgId());
             pstmt.setString(2, organisation.getNavn());
@@ -133,11 +106,9 @@ public class DBOrganisation extends DBCRUD<Organisation> {
 
         } catch (SQLException e) {
             handleSQLException(e);
-
-            minConnection = DriverManager.getConnection(URLLasse);
-            System.out.println("Connected to Lasse");
         } catch (Exception e) {
             System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -145,13 +116,8 @@ public class DBOrganisation extends DBCRUD<Organisation> {
     public void delete(int id) throws SQLException {
         String query = "DELETE FROM Organisation WHERE orgId = ?";
 
-        Connection minConnection;
-
-        try {
-            minConnection = DriverManager.getConnection(URLJohn);
-            System.out.println("Connected to John");
-
-            PreparedStatement pstmt = minConnection.prepareStatement(query);
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
             pstmt.setInt(1, id);
 
@@ -165,10 +131,9 @@ public class DBOrganisation extends DBCRUD<Organisation> {
 
         } catch (SQLException e) {
             handleSQLException(e);
-            minConnection = DriverManager.getConnection(URLLasse);
-            System.out.println("Connected to Lasse");
         } catch (Exception e) {
             System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
