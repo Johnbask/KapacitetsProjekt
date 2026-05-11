@@ -1,12 +1,12 @@
 package Model;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 
 public class Allokering {
     private int allokeringsId;
-    private LocalDate år;
-    private LocalDate måned;
+    private YearMonth periode;
     private double andel;
 
     // Association
@@ -14,11 +14,10 @@ public class Allokering {
     private Projekt projekt;
     private RessourceBehov ressourceBehov;
 
-    public Allokering(int allokeringsId, LocalDate år, LocalDate måned, double allokeringAndel) {
+    public Allokering(int allokeringsId, YearMonth periode, double andel) {
         this.allokeringsId = allokeringsId;
-        this.år = år;
-        this.måned = måned;
-        this.andel = allokeringAndel;
+        this.periode = periode;
+        this.andel = andel;
     }
 
     // Getters & Setters
@@ -30,18 +29,11 @@ public class Allokering {
         this.allokeringsId = allokeringsId;
     }
 
-    public LocalDate getÅr() {
-        return år;
+    public YearMonth getPeriode() {
+        return periode;
     }
-    public void setÅr(LocalDate år) {
-        this.år = år;
-    }
-
-    public LocalDate getMåned() {
-        return måned;
-    }
-    public void setMåned(LocalDate måned) {
-        this.måned = måned;
+    public void setPeriode(YearMonth periode) {
+        this.periode = periode;
     }
 
     public double getAndel() {
@@ -80,6 +72,6 @@ public class Allokering {
 
     @Override
     public String toString() {
-        return "Allokering: " + måned + ", " + andel + ", " + medarbejdere.size();
+        return "Allokering: " + periode + ", " + andel + ", " + medarbejdere.size();
     }
 }

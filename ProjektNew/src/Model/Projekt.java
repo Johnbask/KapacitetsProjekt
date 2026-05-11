@@ -12,7 +12,7 @@ public class Projekt {
     private ArrayList<RessourceBehov> ressourceBehov = new ArrayList<>();
     private ArrayList<Allokering> allokeringer = new ArrayList<>();
 
-    public Projekt(int projektId, String navn, ØkonomiType økonomiType) {
+    public Projekt(int projektId, String navn) {
         this.projektId = projektId;
         this.navn = navn;
     }
