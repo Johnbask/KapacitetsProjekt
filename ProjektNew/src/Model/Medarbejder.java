@@ -95,6 +95,6 @@ public class Medarbejder {
 
     @Override
     public String toString() {
-        return "Medarbejder: " + medId + ", " + initialer + ", " + navn + ", " + type + ", " + stilling + ", " + fratrådt + ", " + afdeling + ", " + organisation + ", " + team;
+        return "Medarbejder: " + medId + ", " + initialer + ", " + navn + ", " + type + ", " + stilling + ", " + fratrådt + ", " + afdeling + ", " + organisation + ", " + team + "\n";
     }
 }

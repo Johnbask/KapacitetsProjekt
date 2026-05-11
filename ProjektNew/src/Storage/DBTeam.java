@@ -169,4 +169,16 @@ public class DBTeam extends DBCRUD<Team> {
           rs.getString("navn")
         );
     }
+
+    @Override
+    protected void handleSQLException(SQLException e) {
+        System.out.println("Fejl: " + e.getMessage());
+        System.out.println("Fejlkode: " + e.getErrorCode());
+
+        String besked = switch (e.getErrorCode()) {
+            case 2627 -> "teamId findes allerede (Duplikat-fejl)";
+            default -> "Ukendt fejl [" + e.getErrorCode() + "]: " + e.getMessage();
+        };
+        System.out.println("Fejl: " + besked);
+    }
 }
