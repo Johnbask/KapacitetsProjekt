@@ -99,12 +99,6 @@ public class ProjektOversigt extends GridPane {
 
         if (min == null || max == null) return;
 
-        // =====================================================
-        // HEADER
-        // row 0 = year
-        // row 1 = quarter
-        // row 2 = month
-        // =====================================================
 
         YearMonth current = min;
         int col = 1;
@@ -118,7 +112,7 @@ public class ProjektOversigt extends GridPane {
             int month = current.getMonthValue();
             int quarter = ((month - 1) / 3) + 1;
 
-            // ---------- YEAR ----------
+
             if (year != currentYear) {
                 Label lblYear = new Label(String.valueOf(year));
                 lblYear.setMinSize(80, 25);
@@ -134,7 +128,7 @@ public class ProjektOversigt extends GridPane {
                 currentQuarter = -1;
             }
 
-            // ---------- QUARTER ----------
+
             if (quarter != currentQuarter) {
                 Label lblQuarter = new Label("Q" + quarter);
                 lblQuarter.setMinSize(80, 25);
@@ -149,7 +143,7 @@ public class ProjektOversigt extends GridPane {
                 currentQuarter = quarter;
             }
 
-            // ---------- MONTH ----------
+
             Label lblMonth = new Label(
                     current.getMonth().name().substring(0, 3)
             );
@@ -163,9 +157,6 @@ public class ProjektOversigt extends GridPane {
             col++;
         }
 
-        // =====================================================
-        // PROJECT ROWS
-        // =====================================================
         int startRow = 3;
 
         for (int i = 0; i < projekter.size(); i++) {
@@ -218,9 +209,7 @@ public class ProjektOversigt extends GridPane {
         }
     }
 
-    // =====================================================
-    // CREATE PROJECT
-    // =====================================================
+
     private void createProjektWindow() {
 
         Stage stage = new Stage();
@@ -253,9 +242,6 @@ public class ProjektOversigt extends GridPane {
         stage.showAndWait();
     }
 
-    // =====================================================
-    // EDIT PROJECT
-    // =====================================================
     private void editProjektWindow() {
 
         if (projekter == null || projekter.isEmpty()) return;

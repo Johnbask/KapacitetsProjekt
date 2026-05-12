@@ -36,7 +36,8 @@ public class Team {
     }
 
     // Hjælpemetode
-    public void addMedarbejder(Medarbejder m) { if (!medarbejdere.contains(m)) medarbejdere.add(m); }
+    public void addMedarbejder(Medarbejder m) { if (!medarbejdere.contains(m)) medarbejdere.add(m);}
+
     public void deleteMedarbejder(Medarbejder m) { medarbejdere.remove(m); }
 
     @Override
