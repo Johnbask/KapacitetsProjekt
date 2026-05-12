@@ -38,9 +38,10 @@ public class Controller {
     =========================
     */
 
-    public void createAfdeling(int afdId, String navn, String leder) throws SQLException {
+    public Afdeling createAfdeling(int afdId, String navn, String leder) throws SQLException {
         Afdeling afdeling = new Afdeling(afdId, navn, leder);
         dbAfdeling.insert(afdeling);
+        return afdeling;
     }
 
     /*
@@ -49,9 +50,10 @@ public class Controller {
     =========================
     */
 
-    public void createOrganisation(int orgId, String navn) throws SQLException {
+    public Organisation createOrganisation(int orgId, String navn) throws SQLException {
         Organisation organisation = new Organisation(orgId, navn);
         dbOrganisation.insert(organisation);
+        return organisation;
     }
 
     /*
@@ -60,9 +62,10 @@ public class Controller {
     =========================
     */
 
-    public void createTeam(int teamId, String navn) throws SQLException {
+    public Team createTeam(int teamId, String navn) throws SQLException {
         Team team = new Team(teamId, navn);
         dbTeam.insert(team);
+        return team;
     }
 
     /*
@@ -71,7 +74,7 @@ public class Controller {
     =========================
     */
 
-    public void createMedarbejder(int medId, String initialer, String navn, MedarbejderType type,
+    public Medarbejder createMedarbejder(int medId, String initialer, String navn, MedarbejderType type,
                                   String stilling, boolean fratrådt, int afdId, int orgId, int teamId) throws SQLException {
         Afdeling afdeling = dbAfdeling.readById(afdId);
         Organisation organisation = dbOrganisation.readById(orgId);
@@ -79,11 +82,12 @@ public class Controller {
 
         if (afdeling == null || organisation == null || team == null) {
             System.out.println("Fejl: Afdeling, Organisation eller Team blev ikke fundet - Medarbejder ikke oprettet." );
-            return;
+            return null;
         }
 
         Medarbejder medarbejder = new Medarbejder(medId, initialer, navn, type, stilling, fratrådt, afdeling, organisation, team);
         dbMedarbejder.insert(medarbejder);
+        return medarbejder;
     }
 
     /*
@@ -92,9 +96,10 @@ public class Controller {
     =========================
      */
 
-    public void createProjekt(int projektId, String navn) throws SQLException {
+    public Projekt createProjekt(int projektId, String navn) throws SQLException {
         Projekt projekt = new Projekt(projektId, navn);
         dbProjekt.insert(projekt);
+        return projekt;
     }
 
     /*
@@ -103,18 +108,20 @@ public class Controller {
     ==========================
      */
 
-    public void createRessourceBehov(int behovId, String rolle, YearMonth periode, double andel, double timePris, ØkonomiType økonomiType, int projektId) throws SQLException {
+    public RessourceBehov createRessourceBehov(int behovId, String rolle, YearMonth periode, double andel, double timePris, ØkonomiType økonomiType, int projektId) throws SQLException {
         Projekt projekt = dbProjekt.readById(projektId);
 
         if (projekt == null) {
             System.out.println("Fejl: Projekt ikke fundet - RessourceBehov ikke oprettet");
-            return;
+            return null;
         }
 
         RessourceBehov ressourceBehov = new RessourceBehov(behovId, rolle, periode, andel, timePris, økonomiType);
         ressourceBehov.setProjekt(projekt);
 
         dbRessourceBehov.insert(ressourceBehov);
+
+        return ressourceBehov;
     }
 
     /*
@@ -123,18 +130,20 @@ public class Controller {
     ===========================
      */
 
-    public void createFase(int faseId, String navn, YearMonth startMåned, YearMonth slutMåned, Kvartal kvartal, double andel, int projektId) throws SQLException {
+    public Fase createFase(int faseId, String navn, YearMonth startMåned, YearMonth slutMåned, Kvartal kvartal, double andel, int projektId) throws SQLException {
         Projekt projekt = dbProjekt.readById(projektId);
 
         if (projekt == null) {
             System.out.println("Fejl: Projekt ikke fundet - Fase ikke oprettet." );
-            return;
+            return null;
         }
 
         Fase fase = new Fase(faseId, navn, startMåned, slutMåned, kvartal, andel);
         fase.setProjekt(projekt);
 
         dbFase.insert(fase);
+
+        return fase;
     }
 
     /*
@@ -143,14 +152,14 @@ public class Controller {
     ==========================
     */
 
-    public void createAllokering(int allokeringsId, YearMonth periode, double andel, int medId, int projektId, int behovId) throws SQLException {
+    public Allokering createAllokering(int allokeringsId, YearMonth periode, double andel, int medId, int projektId, int behovId) throws SQLException {
         Medarbejder medarbejder = dbMedarbejder.readById(medId);
         Projekt projekt = dbProjekt.readById(projektId);
         RessourceBehov ressourceBehov = dbRessourceBehov.readById(behovId);
 
         if (medarbejder == null || projekt == null || ressourceBehov == null) {
             System.out.println("Fejl: Medarbejder, Projekt eller RessourceBehov ikke fundet - Allokering ikke oprettet.");
-            return;
+            return null;
         }
 
         Allokering allokering = new Allokering(allokeringsId, periode, andel);
@@ -159,6 +168,8 @@ public class Controller {
         allokering.setRessourceBehov(ressourceBehov);
 
         dbAllokering.insert(allokering);
+
+        return allokering;
     }
 
     // TODO: CRUD AF ALLE KLASSER

@@ -59,7 +59,7 @@ public class HovdeVindue extends Application {
         // TEST DATA - PROJEKTER
         // =====================================================
 
-        Projekt p1 = new Projekt(1, "System A", ØkonomiType.CAPEX);
+        Projekt p1 = new Projekt(1, "System A");
         p1.addRessourceBehov(new RessourceBehov(
                 1, "Developer", YearMonth.of(2026, 11),
                 0.8, 850, ØkonomiType.CAPEX));
@@ -70,7 +70,7 @@ public class HovdeVindue extends Application {
                 3, "Developer", YearMonth.of(2027, 1),
                 0.9, 850, ØkonomiType.CAPEX));
 
-        Projekt p2 = new Projekt(2, "System B", ØkonomiType.CAPEX);
+        Projekt p2 = new Projekt(2, "System B");
         p2.addRessourceBehov(new RessourceBehov(
                 4, "Tester", YearMonth.of(2026, 12),
                 0.5, 700, ØkonomiType.CAPEX));
@@ -81,7 +81,7 @@ public class HovdeVindue extends Application {
                 6, "Tester", YearMonth.of(2027, 2),
                 0.6, 700, ØkonomiType.CAPEX));
 
-        Projekt p3 = new Projekt(3, "Quick Fix", ØkonomiType.CAPEX);
+        Projekt p3 = new Projekt(3, "Quick Fix");
         p3.addRessourceBehov(new RessourceBehov(
                 7, "Consultant", YearMonth.of(2027, 1),
                 1.0, 1200, ØkonomiType.CAPEX));
@@ -89,7 +89,7 @@ public class HovdeVindue extends Application {
                 8, "Consultant", YearMonth.of(2027, 2),
                 0.5, 1200, ØkonomiType.CAPEX));
 
-        Projekt p4 = new Projekt(4, "Enterprise Platform", ØkonomiType.CAPEX);
+        Projekt p4 = new Projekt(4, "Enterprise Platform");
         p4.addRessourceBehov(new RessourceBehov(
                 10, "Architect", YearMonth.of(2026, 9),
                 1.0, 1200, ØkonomiType.CAPEX));

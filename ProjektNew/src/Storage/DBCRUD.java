@@ -6,7 +6,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 public abstract class DBCRUD<T> {
-    private static final String URLJohn = "";
+    private static final String URLJohn = "jdbc:sqlserver://JOHN_LYSPRO\\SQLEXPRESS;databaseName=KapacitetsProjekt;user=sa;password=Frodo3125;";
     private static final String URLLasse = "";
 
     protected Connection getConnection() throws SQLException {
