@@ -448,4 +448,19 @@ public class Controller {
 
     // TODO: ALLOKERLIGELIGT
 
+
+     /*
+     EFTER INTERVIEW
+      */
+
+    // TODO: Søgning af ledighed på en periode
+
+    // TODO: Kapacitets melding
+
+    // TODO: Sygmeldinger / Barsel
+
+    // TODO: Alert at der mangler medarbejder på projekt
+
+    // TODO: simple søgning - navn
+
 }
