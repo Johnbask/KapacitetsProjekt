@@ -91,6 +91,11 @@ public class Medarbejder {
     }
 
 
+
+
+
+
+
     // TODO: SØGNING INTERN x EKSTERN
 
     @Override

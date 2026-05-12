@@ -10,6 +10,8 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
 
+import java.util.List;
+
 public class TeamOversigt extends GridPane {
 
     private TableView<Team> tvwTeams;
@@ -57,8 +59,7 @@ public class TeamOversigt extends GridPane {
 
         this.add(tvwTeams, 0, 0);
     }
-
-    public void setTeams(ObservableList<Team> teams) {
-        tvwTeams.setItems(teams);
+    public void setTeams(List<Team> teams) {
+        tvwTeams.getItems().setAll(teams);
     }
 }

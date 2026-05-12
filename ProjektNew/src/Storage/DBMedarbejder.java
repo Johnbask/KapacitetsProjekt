@@ -11,7 +11,7 @@ import java.util.ArrayList;
 
 public class DBMedarbejder {
     private static final String URLJohn = "jdbc:sqlserver://JOHN_LYSPRO\\SQLEXPRESS;databaseName=KapacitetsProjekt;user=sa;password=Frodo3125;";
-    private static final String URLLasse = "jdbc:sqlserver://JOHN_LYSPRO\\SQLEXPRESS;databaseName=KapacitetsProjekt;user=sa;password=Frodo3125;";
+    private static final String URLLasse = "jdbc:sqlserver://JOHN_LYSPRO\\SQLEXPRESS;databaseName=KapacitetsProjekt;user=sa;password=laboho32;";
 
     public void insert(Medarbejder medarbejder) throws SQLException {
         String felter = "(medId, initialer, navn, medarbejderType, stilling, fratrådt, afdId, orgId, teamId)";
