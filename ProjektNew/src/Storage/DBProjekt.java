@@ -2,26 +2,17 @@ package Storage;
 
 import Model.Projekt;
 
-import java.awt.image.RescaleOp;
-import java.net.URL;
 import java.sql.*;
 import java.util.ArrayList;
 
-public class DBProjekt extends DBCRUD<Projekt> {
-    private static final String URLJohn = "";
-    private static final String URLLasse = "";
+public class DBProjekt extends Storage<Projekt> {
 
     @Override
     public void insert(Projekt projekt) throws SQLException {
         String query = "INSERT INTO Projekt (projektId, navn) VALUES (?, ?)";
 
-        Connection minConnection;
-
-        try {
-            minConnection = DriverManager.getConnection(URLJohn);
-            System.out.println("Connected to John");
-
-            PreparedStatement pstmt = minConnection.prepareStatement(query);
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
             pstmt.setInt(1, projekt.getProjektId());
             pstmt.setString(2, projekt.getNavn());
@@ -36,11 +27,9 @@ public class DBProjekt extends DBCRUD<Projekt> {
 
         } catch (SQLException e) {
             handleSQLException(e);
-
-            minConnection = DriverManager.getConnection(URLLasse);
-            System.out.println("Connected to Lasse");
         } catch (Exception e) {
             System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -50,14 +39,9 @@ public class DBProjekt extends DBCRUD<Projekt> {
 
         ArrayList<Projekt> projekter = new ArrayList<>();
 
-        Connection minConnection;
-
-        try {
-            minConnection = DriverManager.getConnection(URLJohn);
-            System.out.println("Connected to John");
-
-            PreparedStatement pstmt = minConnection.prepareStatement(query);
-            ResultSet rs = pstmt.executeQuery();
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query);
+             ResultSet rs = pstmt.executeQuery();) {
 
             while (rs.next()) {
                 projekter.add(helperMethod(rs));
@@ -65,11 +49,9 @@ public class DBProjekt extends DBCRUD<Projekt> {
 
         } catch (SQLException e) {
             handleSQLException(e);
-
-            minConnection = DriverManager.getConnection(URLLasse);
-            System.out.println("Connected to Lasse");
         } catch (Exception e) {
             System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return projekter;
@@ -81,13 +63,8 @@ public class DBProjekt extends DBCRUD<Projekt> {
 
         Projekt projekt = null;
 
-        Connection minConnection;
-
-        try {
-            minConnection = DriverManager.getConnection(URLJohn);
-            System.out.println("Connected to John");
-
-            PreparedStatement pstmt = minConnection.prepareStatement(query);
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
             pstmt.setInt(1, id);
 
@@ -100,11 +77,9 @@ public class DBProjekt extends DBCRUD<Projekt> {
             }
         } catch (SQLException e) {
             handleSQLException(e);
-
-            minConnection = DriverManager.getConnection(URLLasse);
-            System.out.println("Connected to Lasse");
         } catch (Exception e) {
             System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return projekt;
@@ -112,17 +87,66 @@ public class DBProjekt extends DBCRUD<Projekt> {
 
     @Override
     public void update(Projekt projekt) throws SQLException {
+        String query = "UPDATE Projekt SET navn = ? WHERE projektId = ?";
 
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
+
+            pstmt.setString(1, projekt.getNavn());
+            pstmt.setInt(2, projekt.getProjektId());
+
+            int rows = pstmt.executeUpdate();
+
+            if (rows > 0) {
+                System.out.println("Projekt opdateret korrekt!");
+            } else {
+                System.out.println("Ingen projekter fundet med id: " + projekt.getProjektId());
+            }
+
+        } catch (SQLException e) {
+            handleSQLException(e);
+        } catch (Exception e) {
+            System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void delete(int id) throws SQLException {
+        String query = "DELETE FROM Projekt WHERE projektId = ?";
 
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
+
+            pstmt.setInt(1, id);
+
+            int rows = pstmt.executeUpdate();
+
+            if (rows > 0) {
+                System.out.println("Projekt deleted korrekt!");
+            } else {
+                System.out.println("Noget gik galt - ingen data deleted.");
+            }
+        } catch (SQLException e) {
+            handleSQLException(e);
+        } catch (Exception e) {
+            System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @Override
     protected void handleSQLException(SQLException e) {
-        super.handleSQLException(e);
+        System.out.println("Fejl: " + e.getMessage());
+        System.out.println("Fejlkode: " + e.getErrorCode());
+
+        String besked = switch (e.getErrorCode()) {
+            case 2627 -> "projektId findes allerede (duplikat-fejl)";
+            case 547 -> "Kan ikke slette projekt - tilknyttet ressourceBehov (FK-fejl)";
+            default -> "Ukendt fejl [" + e.getErrorCode() + "]: " + e.getMessage();
+        };
+
+        System.out.println("Fejl: " + besked);
     }
 
     private Projekt helperMethod(ResultSet rs) throws SQLException {

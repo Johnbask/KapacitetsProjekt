@@ -50,6 +50,6 @@ public class Afdeling {
 
     @Override
     public String toString() {
-        return "Afdeling: (" + afdId + ", " + navn + ", " + leder + ")";
+        return "Afdeling: (" + afdId + ", " + navn + ", " + leder + ") \n";
     }
 }

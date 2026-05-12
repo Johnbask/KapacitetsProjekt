@@ -3,24 +3,16 @@ package Storage;
 import Model.Team;
 
 import java.sql.*;
-import java.time.chrono.IsoChronology;
 import java.util.ArrayList;
 
-public class DBTeam extends DBCRUD<Team> {
-    private static final String URLJohn = "";
-    private static final String URLLasse = "";
+public class DBTeam extends Storage<Team> {
 
     @Override
     public void insert(Team team) throws SQLException {
         String query = "INSERT INTO Team (teamId, navn) VALUES (?, ?)";
 
-        Connection minConnection;
-
-        try {
-            minConnection = DriverManager.getConnection(URLJohn);
-            System.out.println("Connected to John");
-
-            PreparedStatement pstmt = minConnection.prepareStatement(query);
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
             pstmt.setInt(1, team.getTeamId());
             pstmt.setString(2, team.getNavn());
@@ -35,10 +27,9 @@ public class DBTeam extends DBCRUD<Team> {
 
         } catch (SQLException e) {
             handleSQLException(e);
-            minConnection = DriverManager.getConnection(URLLasse);
-            System.out.println("Connected to Lasse");
         } catch (Exception e) {
             System.out.println("Fejl: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -48,12 +39,9 @@ public class DBTeam extends DBCRUD<Team> {
 
         ArrayList<Team> teams = new ArrayList<>();
 
-        Connection minConnection;
-
-        try {
-            minConnection = DriverManager.getConnection(URLJohn);
-            PreparedStatement pstmt = minConnection.prepareStatement(query);
-            ResultSet rs = pstmt.executeQuery();
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query);
+             ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
                 teams.add(helperMethod(rs));
@@ -61,10 +49,9 @@ public class DBTeam extends DBCRUD<Team> {
 
         } catch (SQLException e) {
             handleSQLException(e);
-            minConnection = DriverManager.getConnection(URLLasse);
-            System.out.println("Connected to Lasse");
         } catch (Exception e) {
             System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return teams;
@@ -76,11 +63,8 @@ public class DBTeam extends DBCRUD<Team> {
 
         Team team = null;
 
-        Connection minConnection;
-
-        try {
-            minConnection = DriverManager.getConnection(URLJohn);
-            PreparedStatement pstmt = minConnection.prepareStatement(query);
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
             pstmt.setInt(1, id);
 
@@ -94,10 +78,9 @@ public class DBTeam extends DBCRUD<Team> {
 
         } catch (SQLException e) {
             handleSQLException(e);
-            minConnection = DriverManager.getConnection(URLLasse);
-            System.out.println("Connected to Lasse");
         } catch (Exception e) {
             System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return team;
@@ -105,18 +88,13 @@ public class DBTeam extends DBCRUD<Team> {
 
     @Override
     public void update(Team team) throws SQLException {
-        String query = "UPDATE Team SET teamId = ?, navn = ? WHERE teamId = ?";
+        String query = "UPDATE Team SET navn = ? WHERE teamId = ?";
 
-        Connection minConnection;
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
-        try {
-            minConnection = DriverManager.getConnection(URLJohn);
-            System.out.println("Connected to John");
-
-            PreparedStatement pstmt = minConnection.prepareStatement(query);
-
-            pstmt.setInt(1, team.getTeamId());
-            pstmt.setString(2, team.getNavn());
+            pstmt.setString(1, team.getNavn());
+            pstmt.setInt(2, team.getTeamId());
 
             int rows = pstmt.executeUpdate();
 
@@ -125,12 +103,12 @@ public class DBTeam extends DBCRUD<Team> {
             } else {
                 System.out.println("Ingen team fundet med id: " + team.getTeamId());
             }
+
         } catch (SQLException e) {
             handleSQLException(e);
-            minConnection = DriverManager.getConnection(URLLasse);
-            System.out.println("Connected to Lasse");
         } catch (Exception e) {
             System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -138,11 +116,8 @@ public class DBTeam extends DBCRUD<Team> {
     public void delete(int id) throws SQLException {
         String query = "DELETE FROM Team WHERE teamId = ?";
 
-        Connection minConnection;
-
-        try {
-            minConnection = DriverManager.getConnection(URLJohn);
-            PreparedStatement pstmt = minConnection.prepareStatement(query);
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
             pstmt.setInt(1, id);
 
@@ -156,10 +131,9 @@ public class DBTeam extends DBCRUD<Team> {
 
         } catch (SQLException e) {
             handleSQLException(e);
-            minConnection = DriverManager.getConnection(URLLasse);
-            System.out.println("Connected to Lasse");
         } catch (Exception e) {
             System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -177,6 +151,7 @@ public class DBTeam extends DBCRUD<Team> {
 
         String besked = switch (e.getErrorCode()) {
             case 2627 -> "teamId findes allerede (Duplikat-fejl)";
+            case 547 -> "Kan ikke slette team - medarbejder er stadig tilknyttet (FK-Fejl)";
             default -> "Ukendt fejl [" + e.getErrorCode() + "]: " + e.getMessage();
         };
         System.out.println("Fejl: " + besked);

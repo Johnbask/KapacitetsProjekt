@@ -3,22 +3,21 @@ package Model;
 import Model.Enum.Kvartal;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 
 public class Fase {
     private int faseId;
     private String navn;
-    private LocalDate år;
-    private LocalDate startMåned;
-    private LocalDate slutMåned;
+    private YearMonth startMåned;
+    private YearMonth slutMåned;
     private Kvartal kvartal;
     private double andel; // 0.25, 0.5, 1, 1.25 osv..
     // Associations
     private Projekt projekt;
 
-    public Fase(int faseId, String navn, LocalDate år, LocalDate startMåned, LocalDate slutMåned, Kvartal kvartal, double andel) {
+    public Fase(int faseId, String navn, YearMonth startMåned, YearMonth slutMåned, Kvartal kvartal, double andel) {
         this.faseId = faseId;
         this.navn = navn;
-        this.år = år;
         this.startMåned = startMåned;
         this.slutMåned = slutMåned;
         this.kvartal = kvartal;
@@ -41,24 +40,17 @@ public class Fase {
         this.navn = navn;
     }
 
-    public LocalDate getÅr() {
-        return år;
-    }
-    public void setÅr(LocalDate år) {
-        this.år = år;
-    }
-
-    public LocalDate getStartMåned() {
+    public YearMonth getStartMåned() {
         return startMåned;
     }
-    public void setStartMåned(LocalDate startMåned) {
+    public void setStartMåned(YearMonth startMåned) {
         this.startMåned = startMåned;
     }
 
-    public LocalDate getSlutMåned() {
+    public YearMonth getSlutMåned() {
         return slutMåned;
     }
-    public void setSlutMåned(LocalDate slutMåned) {
+    public void setSlutMåned(YearMonth slutMåned) {
         this.slutMåned = slutMåned;
     }
 

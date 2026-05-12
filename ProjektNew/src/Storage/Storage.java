@@ -1,33 +1,36 @@
 package Storage;
 
-import Model.*;
-
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.ArrayList;
 
-public class Storage {
-    private static ArrayList<Medarbejder> medarbejdere = new ArrayList<>();
-    private static ArrayList<Projekt> projekter = new ArrayList<>();
-    private static ArrayList<Organisation> organisationer = new ArrayList<>();
-    private static ArrayList<Team> teams = new ArrayList<>();
-    private static ArrayList<Afdeling> afdelinger = new ArrayList<>();
-    private static ArrayList<RessourceBehov> ressourceBehovs = new ArrayList<>();
+public abstract class Storage<T> {
+    private static final String URLJohn = "jdbc:sqlserver://JOHN_LYSPRO\\SQLEXPRESS;databaseName=KapacitetsProjekt;user=sa;password=Frodo3125;";
+    private static final String URLLasse = "";
 
-    public static void addMedarbejder (Medarbejder m) { medarbejdere.add(m); }
-    public static void deleteMedarbejder(Medarbejder m) { medarbejdere.remove(m); }
+    protected Connection getConnection() throws SQLException {
+        try {
+            Connection minConnection = DriverManager.getConnection(URLJohn);
+            System.out.println("Connected to John");
+            return minConnection;
+        } catch (SQLException e) {
+            System.out.println("Failed to connect to John - Trying Lasse: " + e.getMessage());
+            Connection minConnection = DriverManager.getConnection(URLLasse);
+            System.out.println("Connected to Lasse");
+            return minConnection;
+        }
+    }
 
-    public static void addProjekt(Projekt p) { projekter.add(p); }
-    public static void deleteProjekt(Projekt p) { projekter.remove(p); }
+    public abstract void insert (T t) throws SQLException;
 
-    public static void addOrganisation(Organisation o) { organisationer.add(o); }
-    public static void deleteOrganisation(Organisation o) { organisationer.remove(o); }
+    public abstract ArrayList<T> readAll() throws SQLException;
 
-    public static void addTeam(Team t) { teams.add(t); }
-    public static void deleteTeam(Team t) { teams.remove(t); }
+    public abstract T readById(int id) throws SQLException;
 
-    public static void addAfdeling(Afdeling a) { afdelinger.add(a); }
-    public static void deleteAfdeling(Afdeling a) { afdelinger.remove(a); }
+    public abstract void update(T t) throws SQLException;
 
-    public static void addRessourceBehov(RessourceBehov r) { ressourceBehovs.add(r); }
-    public static void deleteRessourceBehov(RessourceBehov r) { ressourceBehovs.remove(r); }
+    public abstract void delete(int id) throws SQLException;
 
+    protected void handleSQLException(SQLException e) {};
 }

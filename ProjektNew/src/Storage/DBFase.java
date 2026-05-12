@@ -1,31 +1,38 @@
 package Storage;
 
-import Model.Afdeling;
+import Model.Enum.Kvartal;
+import Model.Fase;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.YearMonth;
 import java.util.ArrayList;
 
-public class DBAfdeling extends Storage<Afdeling> {
-
+public class DBFase extends Storage<Fase> {
     @Override
-    public void insert(Afdeling afdeling) throws SQLException {
-        String felter = "(afdId, navn, leder)";
-        String values = "VALUES (?, ?, ?)";
-        String query = "INSERT INTO Afdeling " + felter + values;
+    public void insert(Fase fase) throws SQLException {
+        String query = "INSERT INTO Fase (faseId, navn, startMåned, slutMåned, kvartal, andel, projektId) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection minConnection = getConnection();
              PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
-            pstmt.setInt(1, afdeling.getAfdId());
-            pstmt.setString(2, afdeling.getNavn());
-            pstmt.setString(3, afdeling.getLeder());
+            pstmt.setInt(1, fase.getFaseId());
+            pstmt.setString(2, fase.getNavn());
+            pstmt.setString(3, fase.getStartMåned().toString());
+            pstmt.setString(4, fase.getSlutMåned().toString());
+            pstmt.setString(5, fase.getKvartal().name());
+            pstmt.setDouble(6, fase.getAndel());
+            pstmt.setInt(7, fase.getProjekt().getProjektId());
 
             int rows = pstmt.executeUpdate();
 
             if (rows > 0) {
-                System.out.println("Afdeling indsat korrekt!");
+                System.out.println("Fase indsat korrekt!");
             } else {
-                System.out.println("Noget gik galt - ingen data indsat.");
+                System.out.println("Noget gik galt - ingen data indsat");
             }
 
         } catch (SQLException e) {
@@ -37,17 +44,17 @@ public class DBAfdeling extends Storage<Afdeling> {
     }
 
     @Override
-    public ArrayList<Afdeling> readAll() throws SQLException {
-        String query = "SELECT afdId, navn, leder FROM Afdeling";
+    public ArrayList<Fase> readAll() throws SQLException {
+        String query = "SELECT faseId, navn, startMåned, slutMåned, kvartal, andel, projektId FROM Fase";
 
-        ArrayList<Afdeling> afdelinger = new ArrayList<>();
+        ArrayList<Fase> faser = new ArrayList<>();
 
         try (Connection minConnection = getConnection();
              PreparedStatement pstmt = minConnection.prepareStatement(query);
              ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
-                afdelinger.add(helperMethod(rs));
+                faser.add(helperMethod(rs));
             }
 
         } catch (SQLException e) {
@@ -57,14 +64,14 @@ public class DBAfdeling extends Storage<Afdeling> {
             e.printStackTrace();
         }
 
-        return afdelinger;
+        return faser;
     }
 
     @Override
-    public Afdeling readById(int id) throws SQLException {
-        String query = "SELECT afdId, navn, leder FROM Afdeling WHERE afdId = ?";
+    public Fase readById(int id) throws SQLException {
+        String query = "";
 
-        Afdeling afdeling = null;
+        Fase fase = null;
 
         try (Connection minConnection = getConnection();
              PreparedStatement pstmt = minConnection.prepareStatement(query)) {
@@ -73,9 +80,9 @@ public class DBAfdeling extends Storage<Afdeling> {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    afdeling = helperMethod(rs);
+                    fase = helperMethod(rs);
                 } else {
-                    System.out.println("Ingen afdeling fundet med id: " + id);
+                    System.out.println("Ingen fase fundet med id: " + id);
                 }
             }
 
@@ -86,26 +93,32 @@ public class DBAfdeling extends Storage<Afdeling> {
             e.printStackTrace();
         }
 
-        return afdeling;
+        return fase;
     }
 
     @Override
-    public void update(Afdeling afdeling) throws SQLException {
-        String query = "UPDATE Afdeling SET afdId = ?, navn = ?, leder = ? WHERE afdId = ?";
+    public void update(Fase fase) throws SQLException {
+        String query = "UPDATE Fase " +
+                "SET navn = ?, startMåned = ?, slutMåned = ?, kvartal = ?, andel = ?, projektId = ? " +
+                "WHERE faseId = ?";
 
         try (Connection minConnection = getConnection();
              PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
-            pstmt.setString(1, afdeling.getNavn());
-            pstmt.setString(2, afdeling.getLeder());
-            pstmt.setInt(3, afdeling.getAfdId());
+            pstmt.setString(1, fase.getNavn());
+            pstmt.setString(2, fase.getStartMåned().toString());
+            pstmt.setString(3, fase.getSlutMåned().toString());
+            pstmt.setString(4, fase.getKvartal().name());
+            pstmt.setDouble(5, fase.getAndel());
+            pstmt.setInt(6, fase.getProjekt().getProjektId());
+            pstmt.setInt(7, fase.getFaseId());
 
             int rows = pstmt.executeUpdate();
 
             if (rows > 0) {
-                System.out.println("Afdeling opdateret korrekt!");
+                System.out.println("Fase opdateret korrekt!");
             } else {
-                System.out.println("Ingen afdelinger fundet med id: " + afdeling.getAfdId());
+                System.out.println("Ingen fase fundet med id: " + fase.getFaseId());
             }
 
         } catch (SQLException e) {
@@ -118,7 +131,7 @@ public class DBAfdeling extends Storage<Afdeling> {
 
     @Override
     public void delete(int id) throws SQLException {
-        String query = "DELETE FROM Afdeling WHERE afdId = ?";
+        String query = "DELETE FROM Fase WHERE faseId = ?";
 
         try (Connection minConnection = getConnection();
              PreparedStatement pstmt = minConnection.prepareStatement(query)) {
@@ -128,9 +141,9 @@ public class DBAfdeling extends Storage<Afdeling> {
             int rows = pstmt.executeUpdate();
 
             if (rows > 0) {
-                System.out.println("Afdeling deleted korrekt!");
+                System.out.println("Fase slettet korrekt!");
             } else {
-                System.out.println("Noget gik galt - ingen data deleted.");
+                System.out.println("Noget gik galt - ingen data slettet.");
             }
 
         } catch (SQLException e) {
@@ -147,19 +160,22 @@ public class DBAfdeling extends Storage<Afdeling> {
         System.out.println("Fejlkode: " + e.getErrorCode());
 
         String besked = switch (e.getErrorCode()) {
-            case 2627 -> "afdId findes allerede (duplikat-fejl)";
-            case 547 -> "Kan ikke slette afdeling - medarbejdere er stadig tilknyttet (FK-fejl)";
+            case 2627 -> "faseId findes allerede (duplikat-fejl)";
+            case 547 -> "projektId findes ikke i Projekt-tabellen (FK-fejl)";
             default -> "Ukendt fejl [" + e.getErrorCode() + "]: " + e.getMessage();
         };
 
         System.out.println("Fejl: " + besked);
     }
 
-    private Afdeling helperMethod(ResultSet rs) throws SQLException {
-        return new Afdeling(
-                rs.getInt("afdId"),
+    private Fase helperMethod(ResultSet rs) throws SQLException {
+        return new Fase(
+                rs.getInt("faseId"),
                 rs.getString("navn"),
-                rs.getString("leder")
+                YearMonth.parse(rs.getString("startMåned")),
+                YearMonth.parse(rs.getString("slutMåned")),
+                Kvartal.valueOf(rs.getString("kvartal")),
+                rs.getDouble("andel")
         );
     }
 }

@@ -2,6 +2,7 @@ package Model;
 
 import Model.Enum.ØkonomiType;
 
+import java.sql.Date;
 import java.time.YearMonth;
 import java.util.ArrayList;
 
