@@ -2,6 +2,8 @@ package Model;
 
 import Model.Enum.MedarbejderType;
 
+import java.util.ArrayList;
+
 public class Medarbejder {
     private int medId;
     private String initialer;
@@ -95,6 +97,6 @@ public class Medarbejder {
 
     @Override
     public String toString() {
-        return "Medarbejder: " + medId + ", " + initialer + ", " + navn + ", " + type + ", " + stilling + ", " + fratrådt + ", " + afdeling + ", " + organisation + ", " + team + "\n";
+        return "\n[Medarbejder: " + medId + ", " + initialer + ", " + navn + ", " + type + ", " + stilling + ", " + fratrådt + "] \n[" + afdeling + organisation + team + "]\n";
     }
 }

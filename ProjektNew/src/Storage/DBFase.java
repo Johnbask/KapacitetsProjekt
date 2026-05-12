@@ -10,7 +10,7 @@ import java.sql.SQLException;
 import java.time.YearMonth;
 import java.util.ArrayList;
 
-public class DBFase extends DBCRUD<Fase> {
+public class DBFase extends Storage<Fase> {
     @Override
     public void insert(Fase fase) throws SQLException {
         String query = "INSERT INTO Fase (faseId, navn, startMåned, slutMåned, kvartal, andel, projektId) " +

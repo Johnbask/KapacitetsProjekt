@@ -5,7 +5,7 @@ import Model.Afdeling;
 import java.sql.*;
 import java.util.ArrayList;
 
-public class DBAfdeling extends DBCRUD<Afdeling> {
+public class DBAfdeling extends Storage<Afdeling> {
 
     @Override
     public void insert(Afdeling afdeling) throws SQLException {

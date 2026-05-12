@@ -10,7 +10,7 @@ import java.sql.SQLException;
 import java.time.YearMonth;
 import java.util.ArrayList;
 
-public class DBRessourceBehov extends DBCRUD<RessourceBehov> {
+public class DBRessourceBehov extends Storage<RessourceBehov> {
 
     @Override
     public void insert(RessourceBehov rb) throws SQLException {

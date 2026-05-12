@@ -5,7 +5,7 @@ import Model.Team;
 import java.sql.*;
 import java.util.ArrayList;
 
-public class DBTeam extends DBCRUD<Team> {
+public class DBTeam extends Storage<Team> {
 
     @Override
     public void insert(Team team) throws SQLException {

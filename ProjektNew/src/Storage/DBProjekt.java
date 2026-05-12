@@ -5,7 +5,7 @@ import Model.Projekt;
 import java.sql.*;
 import java.util.ArrayList;
 
-public class DBProjekt extends DBCRUD<Projekt> {
+public class DBProjekt extends Storage<Projekt> {
 
     @Override
     public void insert(Projekt projekt) throws SQLException {

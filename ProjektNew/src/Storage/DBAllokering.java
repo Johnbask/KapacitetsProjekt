@@ -9,7 +9,7 @@ import java.sql.SQLException;
 import java.time.YearMonth;
 import java.util.ArrayList;
 
-public class DBAllokering extends DBCRUD<Allokering> {
+public class DBAllokering extends Storage<Allokering> {
     @Override
     public void insert(Allokering allokering) throws SQLException {
         String query = "INSERT INTO Allokering (allokeringsId, periode, andel, medId, projektId, behovId) " +

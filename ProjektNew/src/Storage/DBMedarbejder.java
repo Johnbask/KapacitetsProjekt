@@ -12,7 +12,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
-public class DBMedarbejder extends DBCRUD<Medarbejder> {
+public class DBMedarbejder extends Storage<Medarbejder> {
     @Override
     public void insert(Medarbejder m) throws SQLException {
         String query = "INSERT INTO Medarbejder (medId, initialer, navn, medarbejderType, stilling, fratrådt, afdId, orgId, teamId) " +
