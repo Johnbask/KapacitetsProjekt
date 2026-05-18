@@ -43,17 +43,14 @@ public class HovdeVindue extends Application {
         // MEDARBEJDERE
         // =====================================================
         Medarbejder m1 = new Medarbejder(1, "JH", "Jonas Hansen",
-                MedarbejderType.INTERN, "Developer", false, null, null, t1);
+                MedarbejderType.INTERN, "Developer", false, null, null, null);
 
         Medarbejder m2 = new Medarbejder(2, "MK", "Mette Kristensen",
-                MedarbejderType.INTERN, "Tester", false, null, null, t2);
+                MedarbejderType.INTERN, "Tester", false, null, null, null);
 
         Medarbejder m3 = new Medarbejder(3, "AB", "Anders Berg",
-                MedarbejderType.EKSTERN, "Architect", false, null, null, t3);
+                MedarbejderType.EKSTERN, "Architect", false, null, null, null);
 
-        t1.addMedarbejder(m1);
-        t2.addMedarbejder(m2);
-        t3.addMedarbejder(m3);
 
         // =====================================================
         // ALLOKERINGER
