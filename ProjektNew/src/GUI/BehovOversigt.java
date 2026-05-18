@@ -12,6 +12,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
+import javafx.geometry.Insets;
 
 import java.time.YearMonth;
 import java.util.List;
@@ -20,12 +21,10 @@ import java.util.TreeMap;
 
 public class BehovOversigt extends BorderPane {
 
-    private List<RessourceBehov> behovListe;
     private List<Projekt> projekter;
 
     private BarChart<String, Number> barChart;
     private ListView<Projekt> lvwProjekter;
-
     private Button btnOpret;
 
     public BehovOversigt() {
@@ -34,15 +33,9 @@ public class BehovOversigt extends BorderPane {
 
     private void initUI() {
 
-        // =========================
-        // LISTVIEW (VENSTRE)
-        // =========================
         lvwProjekter = new ListView<>();
         lvwProjekter.setPrefWidth(250);
 
-        // =========================
-        // CHART
-        // =========================
         CategoryAxis xAxis = new CategoryAxis();
         NumberAxis yAxis = new NumberAxis();
 
@@ -52,20 +45,15 @@ public class BehovOversigt extends BorderPane {
         setLeft(lvwProjekter);
         setCenter(barChart);
 
-        // =========================
-        // BOTTOM LEFT BUTTON
-        // =========================
         btnOpret = new Button("Opret behov");
 
         GridPane bottom = new GridPane();
         bottom.setHgap(10);
+        bottom.setPadding(new Insets(10));
         bottom.add(btnOpret, 0, 0);
 
         setBottom(bottom);
 
-        // =========================
-        // EVENTS
-        // =========================
         lvwProjekter.getSelectionModel().selectedItemProperty().addListener(
                 (obs, oldVal, newVal) -> {
                     if (newVal != null) {
@@ -77,16 +65,13 @@ public class BehovOversigt extends BorderPane {
         btnOpret.setOnAction(e -> openCreateWindow());
     }
 
-    // =========================
-    // DATA
-    // =========================
     public void setProjekter(List<Projekt> projekter) {
         this.projekter = projekter;
         lvwProjekter.getItems().setAll(projekter);
     }
 
     // =========================
-    // CHART LOGIC (UNCHANGED)
+    // FIXED CHART (START/SLUT)
     // =========================
     private void buildChart(List<RessourceBehov> behovListe) {
 
@@ -94,19 +79,27 @@ public class BehovOversigt extends BorderPane {
 
         if (behovListe == null || behovListe.isEmpty()) return;
 
-        Map<YearMonth, Integer> counts = new TreeMap<>();
+        Map<YearMonth, Double> counts = new TreeMap<>();
 
         for (RessourceBehov b : behovListe) {
-            counts.put(
-                    b.getPeriode(),
-                    counts.getOrDefault(b.getPeriode(), 0) + (int) Math.ceil(b.getAndel())
-            );
+
+            YearMonth current = b.getStartPeriode();
+
+            while (!current.isAfter(b.getSlutPeriode())) {
+
+                counts.put(
+                        current,
+                        counts.getOrDefault(current, 0.0) + b.getAndel()
+                );
+
+                current = current.plusMonths(1);
+            }
         }
 
         XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.setName("Bevhov");
+        series.setName("Behov");
 
-        for (Map.Entry<YearMonth, Integer> entry : counts.entrySet()) {
+        for (Map.Entry<YearMonth, Double> entry : counts.entrySet()) {
 
             String label = entry.getKey().getMonth().name().substring(0, 3)
                     + " " + entry.getKey().getYear();
@@ -120,7 +113,7 @@ public class BehovOversigt extends BorderPane {
     }
 
     // =========================
-    // CREATE WINDOW
+    // CREATE WINDOW (FIXED)
     // =========================
     private void openCreateWindow() {
 
@@ -130,54 +123,65 @@ public class BehovOversigt extends BorderPane {
         GridPane pane = new GridPane();
         pane.setVgap(10);
         pane.setHgap(10);
-        pane.setPadding(new javafx.geometry.Insets(20));
+        pane.setPadding(new Insets(20));
 
         TextField tfRolle = new TextField();
-        TextField tfÅr = new TextField();
-        TextField tfMåned = new TextField();
+        TextField tfStartÅr = new TextField();
+        TextField tfStartMåned = new TextField();
+        TextField tfSlutÅr = new TextField();
+        TextField tfSlutMåned = new TextField();
         TextField tfAntal = new TextField();
 
         pane.add(new Label("Rolle:"), 0, 0);
         pane.add(tfRolle, 1, 0);
 
-        pane.add(new Label("År:"), 0, 1);
-        pane.add(tfÅr, 1, 1);
+        pane.add(new Label("Start år:"), 0, 1);
+        pane.add(tfStartÅr, 1, 1);
 
-        pane.add(new Label("Måned:"), 0, 2);
-        pane.add(tfMåned, 1, 2);
+        pane.add(new Label("Start måned:"), 0, 2);
+        pane.add(tfStartMåned, 1, 2);
 
-        pane.add(new Label("Antal:"), 0, 3);
-        pane.add(tfAntal, 1, 3);
+        pane.add(new Label("Slut år:"), 0, 3);
+        pane.add(tfSlutÅr, 1, 3);
+
+        pane.add(new Label("Slut måned:"), 0, 4);
+        pane.add(tfSlutMåned, 1, 4);
+
+        pane.add(new Label("Antal:"), 0, 5);
+        pane.add(tfAntal, 1, 5);
 
         Button btnGem = new Button("Gem");
-
-        pane.add(btnGem, 1, 4);
+        pane.add(btnGem, 1, 6);
 
         btnGem.setOnAction(e -> {
+
+            Projekt selected = lvwProjekter.getSelectionModel().getSelectedItem();
+            if (selected == null) return;
 
             RessourceBehov ny = new RessourceBehov(
                     999,
                     tfRolle.getText(),
                     YearMonth.of(
-                            Integer.parseInt(tfÅr.getText()),
-                            Integer.parseInt(tfMåned.getText())
+                            Integer.parseInt(tfStartÅr.getText()),
+                            Integer.parseInt(tfStartMåned.getText())
+                    ),
+                    YearMonth.of(
+                            Integer.parseInt(tfSlutÅr.getText()),
+                            Integer.parseInt(tfSlutMåned.getText())
                     ),
                     Double.parseDouble(tfAntal.getText()),
                     1000,
                     ØkonomiType.CAPEX
             );
 
-            Projekt selected = lvwProjekter.getSelectionModel().getSelectedItem();
+            selected.getRessourceBehov().add(ny);
 
-            if (selected != null) {
-                selected.getRessourceBehov().add(ny);
-                buildChart(selected.getRessourceBehov());
-            }
+            buildChart(selected.getRessourceBehov());
 
             stage.close();
         });
 
-        stage.setScene(new Scene(pane, 300, 250));
+        stage.setScene(new Scene(pane, 350, 320));
         stage.show();
     }
 }

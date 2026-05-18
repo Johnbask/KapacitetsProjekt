@@ -211,7 +211,7 @@ public class Controller {
     ==========================
      */
 
-    public RessourceBehov createRessourceBehov(int behovId, String rolle, YearMonth periode,
+    public RessourceBehov createRessourceBehov(int behovId, String rolle, YearMonth startPeriode, YearMonth slutPeriode,
                                                double andel, double timePris, ØkonomiType økonomiType,
                                                int projektId) throws SQLException {
 
@@ -222,7 +222,7 @@ public class Controller {
             return null;
         }
 
-        RessourceBehov ressourceBehov = new RessourceBehov(behovId, rolle, periode, andel, timePris, økonomiType);
+        RessourceBehov ressourceBehov = new RessourceBehov(behovId, rolle, startPeriode,slutPeriode, andel, timePris, økonomiType);
         ressourceBehov.setProjekt(projekt);
 
         dbRessourceBehov.insert(ressourceBehov);
@@ -238,7 +238,7 @@ public class Controller {
         return dbRessourceBehov.readById(behovId);
     }
 
-    public void updateRessourceBehov(int nyBehovId, String nyRolle, YearMonth nyPeriode,
+    public void updateRessourceBehov(int nyBehovId, String nyRolle, YearMonth nyStartPeriode, YearMonth nySlutPeriode,
                                      double nyAndel, double nyTimePris, ØkonomiType nyØkonomiType,
                                      int nyProjektId) throws SQLException {
         Projekt projekt = dbProjekt.readById(nyProjektId);
@@ -248,7 +248,7 @@ public class Controller {
             return;
         }
 
-        RessourceBehov ressourceBehov = new RessourceBehov(nyBehovId, nyRolle, nyPeriode, nyAndel, nyTimePris, nyØkonomiType);
+        RessourceBehov ressourceBehov = new RessourceBehov(nyBehovId, nyRolle,nyStartPeriode, nySlutPeriode, nyAndel, nyTimePris, nyØkonomiType);
         ressourceBehov.setProjekt(projekt);
         dbRessourceBehov.update(ressourceBehov);
     }
