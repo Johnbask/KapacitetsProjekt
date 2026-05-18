@@ -1,5 +1,6 @@
 package Storage;
 
+import Model.Medarbejder;
 import Model.Projekt;
 
 import java.sql.*;
@@ -112,7 +113,7 @@ public class DBProjekt extends Storage<Projekt> {
     }
 
     @Override
-    public void delete(int id) throws SQLException {
+    public Medarbejder delete(int id) throws SQLException {
         String query = "DELETE FROM Projekt WHERE projektId = ?";
 
         try (Connection minConnection = getConnection();
@@ -133,6 +134,7 @@ public class DBProjekt extends Storage<Projekt> {
             System.out.println("Uventet fejl: " + e.getMessage());
             e.printStackTrace();
         }
+        return null;
     }
 
     @Override

@@ -2,6 +2,7 @@ package Storage;
 
 import Model.Enum.Kvartal;
 import Model.Fase;
+import Model.Medarbejder;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -69,7 +70,7 @@ public class DBFase extends Storage<Fase> {
 
     @Override
     public Fase readById(int id) throws SQLException {
-        String query = "";
+        String query = "SELECT faseId, navn, startMåned, slutMåned, kvartal, andel, projektId FROM Fase WHERE faseId = ?";
 
         Fase fase = null;
 
@@ -130,7 +131,7 @@ public class DBFase extends Storage<Fase> {
     }
 
     @Override
-    public void delete(int id) throws SQLException {
+    public Medarbejder delete(int id) throws SQLException {
         String query = "DELETE FROM Fase WHERE faseId = ?";
 
         try (Connection minConnection = getConnection();
@@ -152,6 +153,7 @@ public class DBFase extends Storage<Fase> {
             System.out.println("Uventet fejl: " + e.getMessage());
             e.printStackTrace();
         }
+        return null;
     }
 
     @Override

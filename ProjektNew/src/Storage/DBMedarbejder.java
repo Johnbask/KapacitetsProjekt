@@ -15,7 +15,8 @@ import java.util.ArrayList;
 public class DBMedarbejder extends Storage<Medarbejder> {
     @Override
     public void insert(Medarbejder m) throws SQLException {
-        String query = "INSERT INTO Medarbejder (medId, initialer, navn, medarbejderType, stilling, fratrådt, afdId, orgId, teamId) " +
+        String query = "INSERT INTO Medarbejder " +
+                "(medId, initialer, navn, medarbejderType, stilling, fratrådt, afdId, orgId, teamId) " +
                 "VALUES (?, ?, ?, ?, ?, ? ,? ,?, ?)";
 
         try (Connection minConnection = getConnection();
@@ -152,7 +153,7 @@ public class DBMedarbejder extends Storage<Medarbejder> {
     }
 
     @Override
-    public void delete(int id) throws SQLException {
+    public Medarbejder delete(int id) throws SQLException {
         String query = "DELETE FROM Medarbejder WHERE medId = ?";
 
         try (Connection minConnection = getConnection();
@@ -174,6 +175,7 @@ public class DBMedarbejder extends Storage<Medarbejder> {
             System.out.println("Uventet fejl: " + e.getMessage());
             e.printStackTrace();
         }
+        return null;
     }
 
     @Override

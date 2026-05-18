@@ -3,13 +3,16 @@ package Controller;
 import Model.*;
 import Model.Enum.Kvartal;
 import Model.Enum.MedarbejderType;
+import Model.Enum.MeldingType;
 import Model.Enum.ØkonomiType;
 import Storage.*;
-import org.junit.jupiter.api.AfterAll;
 
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Controller {
     private final DBMedarbejder dbMedarbejder = new DBMedarbejder();
@@ -20,6 +23,7 @@ public class Controller {
     private final DBRessourceBehov dbRessourceBehov = new DBRessourceBehov();
     private final DBFase dbFase = new DBFase();
     private final DBAllokering dbAllokering = new DBAllokering();
+    private final DBMelding dbMelding = new DBMelding();
 
     // Singleton
     private static Controller instance;
@@ -111,9 +115,10 @@ public class Controller {
         return dbTeam.readById(teamId);
     }
 
-    public void updateTeam(int teamId, String nyNavn) throws SQLException {
+    public Team updateTeam(int teamId, String nyNavn) throws SQLException {
         Team team = new Team(teamId, nyNavn);
         dbTeam.update(team);
+        return team;
     }
 
     public void deleteTeam(int teamId) throws SQLException {
@@ -150,9 +155,9 @@ public class Controller {
         return dbMedarbejder.readById(medId);
     }
 
-    public void updateMedarbejder(int medId, String nyInitialer, String nynNavn,
-                                  MedarbejderType type, String nyStilling, boolean fratrådt,
-                                  int afdId, int orgId, int teamId) throws  SQLException {
+    public Medarbejder updateMedarbejder(int medId, String nyInitialer, String nynNavn,
+                                         MedarbejderType type, String nyStilling, boolean fratrådt,
+                                         int afdId, int orgId, int teamId) throws  SQLException {
         Afdeling afdeling = dbAfdeling.readById(afdId);
         Organisation organisation = dbOrganisation.readById(orgId);
         Team team = dbTeam.readById(teamId);
@@ -163,10 +168,11 @@ public class Controller {
 
         Medarbejder medarbejder = new Medarbejder(medId, nyInitialer, nynNavn, type, nyStilling, fratrådt, afdeling, organisation, team);
         dbMedarbejder.update(medarbejder);
+        return medarbejder;
     }
 
-    public void deleteMedarbejder(int medId) throws SQLException {
-        dbMedarbejder.delete(medId);
+    public Medarbejder deleteMedarbejder(int medId) throws SQLException {
+        return dbMedarbejder.delete(medId);
     }
 
     /*
@@ -359,6 +365,126 @@ public class Controller {
         dbAllokering.delete(allokeringsId);
     }
 
+    // TODO: Syg melding / Barsel
+
+    /*
+    =====================
+    |      Melding      |
+    =====================
+    */
+
+    public Melding createMelding(int meldingsId, MeldingType type, LocalDate startDato, LocalDate slutDato, String noter, int medId) throws SQLException {
+        Medarbejder medarbejder = dbMedarbejder.readById(medId);
+
+        if (medarbejder == null) {
+            System.out.println("Fejl: Medarbejder ikke fundet - melding ikke oprettet.");
+            return null;
+        }
+
+        if (startDato.isAfter(slutDato)) {
+            System.out.println("Fejl: startDato må ikke være efter slutDato");
+        }
+
+        Melding melding = new Melding(meldingsId, type, startDato, slutDato, noter, medarbejder);
+        dbMelding.insert(melding);
+        return melding;
+    }
+
+    public ArrayList<Melding> getAlleMeldinger() throws SQLException {
+        return dbMelding.readAll();
+    }
+
+    public Melding getMeldingById(int meldingsId) throws SQLException {
+        return dbMelding.readById(meldingsId);
+    }
+
+    public ArrayList<Melding> getMeldingerForMedarbejder(String søgeord) throws SQLException {
+        ArrayList<Melding> meldinger = dbMelding.readByMedarbejder(søgeord);
+
+        System.out.println("Meldinger for '" + søgeord + "':");
+        if (meldinger.isEmpty()) {
+            System.out.println("    Ingen meldinger registreret.");
+        } else {
+            for (Melding m : meldinger) {
+                System.out.println("    " + m);
+            }
+        }
+
+        return meldinger;
+    }
+
+    public ArrayList<Melding> getMeldingerAfType(MeldingType type) throws SQLException {
+        ArrayList<Melding> alle = getAlleMeldinger();
+        ArrayList<Melding> resultater = new ArrayList<>();
+
+        for (Melding m : alle) {
+            if (m.getType() == type) {
+                resultater.add(m);
+            }
+        }
+
+        System.out.println("Meldinger af type " + type + ":");
+        if (resultater.isEmpty()) {
+            System.out.println("    Ingen meldinger af denne type.");
+        } else {
+            for (Melding m : resultater) {
+                System.out.println("    " + m);
+            }
+        }
+
+        return resultater;
+    }
+
+    public boolean harAktivMelding(String navn, LocalDate dato) throws SQLException {
+        ArrayList<Medarbejder> matches = søgMedarbejderNavn(navn);
+
+        if (matches.isEmpty()) {
+            System.out.println("Fejl: Ingen medarbejder fundet med navn.");
+            return false;
+        }
+
+        Medarbejder medarbejder = matches.getFirst();
+
+        if (matches.size() > 1) {
+            System.out.println("Advarsel: " + matches.size() + " medarbejdere fundet med navnet '"
+            + navn + "' - tjekker for " + medarbejder.getNavn() +
+                    " (" + medarbejder.getInitialer() + ")");
+        }
+
+        ArrayList<Melding> meldinger = dbMelding.readByMedarbejder(medarbejder.getNavn());
+
+        for (Melding m : meldinger) {
+            if (!dato.isBefore(m.getStartDato()) && !dato.isAfter(m.getSlutDato())) {
+                System.out.println(medarbejder.getNavn() + " har en aktiv " +
+                        m.getType() + "-melding den " + dato +
+                        " (" + m.getStartDato() + " -> " + m.getSlutDato() + ")");
+                return true;
+            }
+        }
+
+        System.out.println(medarbejder.getNavn() + " har ingen aktiv melding den " + dato);
+        return false;
+    }
+
+    public void updateMelding(int meldingsId, MeldingType type, LocalDate startDato, LocalDate slutDato, String noter, int medId) throws SQLException {
+        Medarbejder medarbejder = dbMedarbejder.readById(medId);
+
+        if (medarbejder == null) {
+            System.out.println("Fejl: Medarbejder ikke fundet - melding ikke opdateret.");
+        }
+
+        if (slutDato.isAfter(startDato)) {
+            System.out.println("Fejl: slutDato må ikke være efter startDato.");
+        }
+
+        Melding melding = new Melding(meldingsId, type, startDato, slutDato, noter, medarbejder);
+        dbMelding.update(melding);
+    }
+
+    public void deleteMelding(int meldingsId) throws SQLException {
+        dbMelding.delete(meldingsId);
+    }
+
     // TODO: CRUD AF ALLE KLASSER
 
     // TODO: VIS ALLOKERET TID TIL MEDARBEJDER
@@ -450,17 +576,271 @@ public class Controller {
 
 
      /*
-     EFTER INTERVIEW
-      */
+     EFTER INTERVIEW/MØDE
+     */
 
     // TODO: Søgning af ledighed på en periode
 
-    // TODO: Kapacitets melding
+    /*
+     Viser en medarbejders ledighed på alle perioder.
 
-    // TODO: Syg melding / Barsel
+     Givet et navn af medarbejderen, vil der returneres et Map hvor:
+        - Er YearMonth (periode)
+        - Er værdien for resten af ledigheden
+
+     Eksempel output: { 2026-06 -> 0.75, 2026-08 -> 0.25 osv.. }
+    */
+
+    public Map<YearMonth, Double> getLedighedForMedarbejder(String navn) throws SQLException {
+        ArrayList<Medarbejder> matches = søgMedarbejderNavn(navn);
+
+        if (matches.isEmpty()) {
+            System.out.println("Fejl: Ingen medarbejder fundet med navn: " + navn);
+            return new HashMap<>();
+        }
+
+        Medarbejder medarbejder = matches.getFirst();
+
+        if (matches.size() > 1.0) {
+            System.out.println("Advarsel: " + matches.size() + " medarbejder fundet med navnet '" + navn +
+                    "' - viser ledighed for " + medarbejder.getNavn() + " (" + medarbejder.getInitialer() +
+                    ", id: " + medarbejder.getMedId() + ")");
+        }
+
+        ArrayList<Allokering> allokeringer = getAllokeringerForMedarbejder(medarbejder.getMedId());
+
+        Map<YearMonth, Double> ledighedMap = new HashMap<>();
+
+        for (Allokering a : allokeringer) {
+            YearMonth periode = a.getPeriode();
+            ledighedMap.put(periode, ledighedMap.getOrDefault(periode, 1.0) - a.getAndel());
+        }
+
+        System.out.println("Ledighed for " + medarbejder.getNavn() + " (" + medarbejder.getInitialer() + ")");
+
+        if (ledighedMap.isEmpty()) {
+            System.out.println("    Ingen allokeringer fundet - medarbejder er ledig i alle perioder");
+        } else {
+            ledighedMap.entrySet().stream().sorted(
+                    Map.Entry.comparingByKey()).forEach(entry
+                    -> System.out.println("    " + entry.getKey() + " -> ledighed: " + entry.getValue()));
+        }
+
+        return ledighedMap;
+    }
+
+    /*
+    Finder alle ledige medarbejdere i en givet periode
+
+    Returnerer et Map hvor
+        - Er medarbejderen
+        - Er værdien for resten af ledigheden
+    */
+    public Map<Medarbejder, Double> getLedigeMedarbejdereIPeriode(YearMonth periode) throws SQLException {
+        Map<Medarbejder, Double> ledighedMap = beregnLedighedIPeriode(periode);
+
+        System.out.println("Ledige medarbejdere i " + periode);
+
+        if (ledighedMap.isEmpty()) {
+            System.out.println("    Ingen ledige medarbejdere fundet i denne periode");
+        } else {
+            ledighedMap.entrySet().stream().sorted((a, b)
+                    -> Double.compare(b.getValue(), a.getValue())).forEach(entry
+                    -> System.out.println("  " + entry.getKey().getNavn() + " (" + entry.getKey().getInitialer() + ")"
+                    + " -> ledighed: " + entry.getValue()));
+        }
+
+        return ledighedMap;
+    }
+
+    /*
+    Kigger efter medarbejdere med nok ledighed til at dække et specifikt behov.
+    Via et givet periode og en påkrævet andel returnere kun medarbejdere
+    Som har mindst den ønskede ledighed i den periode
+
+    Eksempel: getLedigeMedarbejdereMedAndel(YearMonth.of(2026, 7), 0.5)
+    -> finder alle der har mindst 0.5 ledig i juli 2026
+    */
+
+    public Map<Medarbejder, Double> getLedigMedarbejdereMedAndel(YearMonth periode, double påkrævetAndel) throws SQLException {
+        Map<Medarbejder, Double> alleLedige = beregnLedighedIPeriode(periode);
+        Map<Medarbejder, Double> resultater = new HashMap<>();
+
+        for (Map.Entry<Medarbejder, Double> entry : alleLedige.entrySet()) {
+            if (entry.getValue() >= påkrævetAndel) {
+                resultater.put(entry.getKey(), entry.getValue());
+            }
+        }
+
+        System.out.println("Medarbejdere med mindst " + påkrævetAndel + " ledig i " + periode);
+
+        if (resultater.isEmpty()) {
+            System.out.println("Ingen medarbejdere har tilstrækkelig ledighed");
+        } else {
+            resultater.entrySet().stream().sorted((a, b)
+                    -> Double.compare(b.getValue(), a.getValue())).forEach(entry
+                    -> System.out.println(" " + entry.getKey().getNavn() + " (" + entry.getKey().getInitialer() + ") "
+                    + " -> ledighed: " + entry.getValue()));
+        }
+
+        return resultater;
+    }
+
+    /*
+    Hjælpemetode til at beregne ledighed i en periode
+    */
+
+    private Map<Medarbejder, Double> beregnLedighedIPeriode(YearMonth periode) throws SQLException {
+        ArrayList<Medarbejder> alleMedarbejdere = getAlleMedarbejdere();
+        ArrayList<Allokering> alleAllokeringer = getAlleAllokeringer();
+        Map<Medarbejder, Double> ledighedMap = new HashMap<>();
+
+        for (Medarbejder m : alleMedarbejdere) {
+            double total = 0;
+
+            for (Allokering a : alleAllokeringer) {
+                if (a.getPeriode().equals(periode)) {
+                    for (Medarbejder am : a.getMedarbejdere()) {
+                        if (am.getMedId() == m.getMedId()) {
+                            total += a.getAndel();
+                        }
+                    }
+                }
+            }
+            if (total < 1.0) {
+                double ledighed = total > 0 ? 1.0 - total : 0.0;
+                ledighedMap.put(m, ledighed);
+            }
+        }
+
+        return ledighedMap;
+    }
+
+    // TODO: Kapacitets melding
 
     // TODO: Alert at der mangler medarbejder på projekt
 
     // TODO: simple søgning - navn
+
+    // Søg medarbejder på navn eller initialer
+    public ArrayList<Medarbejder> søgMedarbejderNavn(String søgeord) throws SQLException {
+        ArrayList<Medarbejder> alle = getAlleMedarbejdere();
+        ArrayList<Medarbejder> resultater = new ArrayList<>();
+        String lowerCase = søgeord.toLowerCase();
+
+        for (Medarbejder m : alle) {
+            if (m.getNavn().toLowerCase().contains(lowerCase) ||
+            m.getInitialer().toLowerCase().contains(lowerCase)) {
+                resultater.add(m);
+            }
+        }
+
+        return resultater;
+    }
+
+    // Søg Afdeling på navn
+    public ArrayList<Afdeling> søgAfdelingNavn(String søgeord) throws SQLException {
+        ArrayList<Afdeling> alle = getAlleAfdelinger();
+        ArrayList<Afdeling> resultater = new ArrayList<>();
+        String lowerCaes = søgeord.toLowerCase();
+
+        for (Afdeling a : alle) {
+            if (a.getNavn().toLowerCase().contains(lowerCaes)) {
+                resultater.add(a);
+            }
+        }
+
+        return resultater;
+    }
+
+    // Søg Organisation på navn
+    public ArrayList<Organisation> søgOrganisationNavn(String søgeord) throws SQLException {
+        ArrayList<Organisation> alle = getAlleOrganisationer();
+        ArrayList<Organisation> resultater = new ArrayList<>();
+        String lowerCase = søgeord.toLowerCase();
+
+        for (Organisation o : alle) {
+            if (o.getNavn().toLowerCase().contains(lowerCase)) {
+                resultater.add(o);
+            }
+        }
+
+        return resultater;
+    }
+
+    // Søg Team på navn
+    public ArrayList<Team> søgTeamNavn(String søgeord) throws SQLException {
+        ArrayList<Team> alle = getAlleTeams();
+        ArrayList<Team> resultater = new ArrayList<>();
+        String lowerCase = søgeord.toLowerCase();
+
+        for (Team t : alle) {
+            if (t.getNavn().toLowerCase().contains(lowerCase)) {
+                resultater.add(t);
+            }
+        }
+
+        return resultater;
+    }
+
+    // Søg Projekt på navn
+    public ArrayList<Projekt> søgProjektNavn(String søgeord) throws SQLException {
+        ArrayList<Projekt> alle = getAlleProjekter();
+        ArrayList<Projekt> resultater = new ArrayList<>();
+        String lowerCase = søgeord.toLowerCase();
+
+        for (Projekt p : alle) {
+            if (p.getNavn().toLowerCase().contains(lowerCase)) {
+                resultater.add(p);
+            }
+        }
+
+        return resultater;
+    }
+
+    // Søg Fase på navn
+    public ArrayList<Fase> søgFaseNavn(String søgeord) throws SQLException {
+        ArrayList<Fase> alle = getAlleFaser();
+        ArrayList<Fase> resultater = new ArrayList<>();
+        String lowerCase = søgeord.toLowerCase();
+
+        for (Fase f : alle) {
+            if (f.getNavn().toLowerCase().contains(lowerCase)) {
+                resultater.add(f);
+            }
+        }
+
+        return resultater;
+    }
+
+    // Søg RessourceBehov på rolle
+    public ArrayList<RessourceBehov> søgRessourceBehovRolle(String søgeord) throws SQLException {
+        ArrayList<RessourceBehov> alle = getAlleRessourceBehov();
+        ArrayList<RessourceBehov> resultater = new ArrayList<>();
+        String lowerCase = søgeord.toLowerCase();
+
+        for (RessourceBehov rb : alle) {
+            if (rb.getRolle().toLowerCase().contains(lowerCase)) {
+                resultater.add(rb);
+            }
+        }
+
+        return resultater;
+    }
+
+    // Tæller antal medarbejder pr. Team
+    public int antalMedarbejderPrTeam(Team team) throws SQLException {
+        ArrayList<Medarbejder> medarbejdere = getAlleMedarbejdere();
+
+        int total = 0;
+
+        for (Medarbejder medarbejder : medarbejdere) {
+            if (medarbejder.getTeam().equals(team)) {
+                total++;
+            }
+        }
+
+        return total;
+    }
 
 }

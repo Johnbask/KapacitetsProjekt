@@ -1,5 +1,6 @@
 package Storage;
 
+import Model.Medarbejder;
 import Model.Organisation;
 
 import java.sql.*;
@@ -44,7 +45,9 @@ public class DBOrganisation extends Storage<Organisation> {
              ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
-                organisationer.add(helperMethod(rs));
+                Organisation o = helperMethod(rs);
+                System.out.println("Hentet organisation: " + o.getOrgId() + " - " + o.getNavn());
+                organisationer.add(o);
             }
 
         } catch (SQLException e) {
@@ -113,7 +116,7 @@ public class DBOrganisation extends Storage<Organisation> {
     }
 
     @Override
-    public void delete(int id) throws SQLException {
+    public Medarbejder delete(int id) throws SQLException {
         String query = "DELETE FROM Organisation WHERE orgId = ?";
 
         try (Connection minConnection = getConnection();
@@ -135,6 +138,7 @@ public class DBOrganisation extends Storage<Organisation> {
             System.out.println("Uventet fejl: " + e.getMessage());
             e.printStackTrace();
         }
+        return null;
     }
 
     @Override

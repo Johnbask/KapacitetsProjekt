@@ -1,6 +1,7 @@
 package Storage;
 
 import Model.Afdeling;
+import Model.Medarbejder;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -91,7 +92,7 @@ public class DBAfdeling extends Storage<Afdeling> {
 
     @Override
     public void update(Afdeling afdeling) throws SQLException {
-        String query = "UPDATE Afdeling SET afdId = ?, navn = ?, leder = ? WHERE afdId = ?";
+        String query = "UPDATE Afdeling SET navn = ?, leder = ? WHERE afdId = ?";
 
         try (Connection minConnection = getConnection();
              PreparedStatement pstmt = minConnection.prepareStatement(query)) {
@@ -117,7 +118,7 @@ public class DBAfdeling extends Storage<Afdeling> {
     }
 
     @Override
-    public void delete(int id) throws SQLException {
+    public Medarbejder delete(int id) throws SQLException {
         String query = "DELETE FROM Afdeling WHERE afdId = ?";
 
         try (Connection minConnection = getConnection();
@@ -139,6 +140,7 @@ public class DBAfdeling extends Storage<Afdeling> {
             System.out.println("Uventet fejl: " + e.getMessage());
             e.printStackTrace();
         }
+        return null;
     }
 
     @Override

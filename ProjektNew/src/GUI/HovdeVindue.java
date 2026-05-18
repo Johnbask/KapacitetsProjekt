@@ -41,11 +41,6 @@ public class HovdeVindue extends Application {
 
         TeamOversigt teamPane = new TeamOversigt();
 
-        Team t1 = new Team(1, "Backend");
-        Team t2 = new Team(2, "Frontend");
-        Team t3 = new Team(3, "DevOps");
-
-        teamPane.setTeams(List.of(t1, t2, t3));
         tabTeams.setContent(teamPane);
 
         // =====================================================

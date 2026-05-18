@@ -102,6 +102,6 @@ public class Medarbejder {
 
     @Override
     public String toString() {
-        return "\n[Medarbejder: " + medId + ", " + initialer + ", " + navn + ", " + type + ", " + stilling + ", " + fratrådt + "] \n[" + afdeling + organisation + team + "]\n";
+        return "\n[Medarbejder: " + medId + ", " + initialer + ", " + navn + ", " + type + ", " + stilling + ", " + fratrådt + ", " + team;
     }
 }

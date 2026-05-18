@@ -1,6 +1,7 @@
 package Storage;
 
 import Model.Enum.ØkonomiType;
+import Model.Medarbejder;
 import Model.RessourceBehov;
 
 import java.sql.Connection;
@@ -135,7 +136,7 @@ public class DBRessourceBehov extends Storage<RessourceBehov> {
     }
 
     @Override
-    public void delete(int id) throws SQLException {
+    public Medarbejder delete(int id) throws SQLException {
         String query = "DELETE FROM RessourceBehov WHERE behovId = ?";
 
         try (Connection minConnection = getConnection();
@@ -157,6 +158,7 @@ public class DBRessourceBehov extends Storage<RessourceBehov> {
             System.out.println("Uventet fejl: " + e.getMessage());
             e.printStackTrace();
         }
+        return null;
     }
 
     @Override

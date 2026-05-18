@@ -1,5 +1,7 @@
 package Storage;
 
+import Model.Enum.MedarbejderType;
+import Model.Medarbejder;
 import Model.Team;
 
 import java.sql.*;
@@ -35,7 +37,11 @@ public class DBTeam extends Storage<Team> {
 
     @Override
     public ArrayList<Team> readAll() throws SQLException {
-        String query = "SELECT teamId, navn FROM Team";
+        String query = "SELECT t.teamId, t.navn, " +
+                "m.medId, m.initialer, m.navn AS medNavn, m.medarbejderType AS medType, m.stilling, m.fratrådt " +
+                "FROM Team t " +
+                "Left Join Medarbejder m ON  m.teamId = t.teamId " +
+                "ORDER BY t.teamId";
 
         ArrayList<Team> teams = new ArrayList<>();
 
@@ -43,8 +49,28 @@ public class DBTeam extends Storage<Team> {
              PreparedStatement pstmt = minConnection.prepareStatement(query);
              ResultSet rs = pstmt.executeQuery()) {
 
+            Team currentTeam = null;
+
             while (rs.next()) {
-                teams.add(helperMethod(rs));
+                int teamId = rs.getInt("teamId");
+
+                if (currentTeam == null || currentTeam.getTeamId() != teamId) {
+                    currentTeam = new Team(teamId, rs.getString("navn"));
+                    teams.add(currentTeam);
+                }
+
+                if (rs.getInt("medId") != 0) {
+                    Medarbejder m = new Medarbejder(
+                            rs.getInt("medId"),
+                            rs.getString("initialer"),
+                            rs.getString("medNavn"),
+                            MedarbejderType.valueOf(rs.getString("medType")),
+                            rs.getString("stilling"),
+                            rs.getBoolean("fratrådt"),
+                            null, null, currentTeam
+                    );
+                    currentTeam.addMedarbejder(m);
+                }
             }
 
         } catch (SQLException e) {
@@ -113,7 +139,7 @@ public class DBTeam extends Storage<Team> {
     }
 
     @Override
-    public void delete(int id) throws SQLException {
+    public Medarbejder delete(int id) throws SQLException {
         String query = "DELETE FROM Team WHERE teamId = ?";
 
         try (Connection minConnection = getConnection();
@@ -135,6 +161,7 @@ public class DBTeam extends Storage<Team> {
             System.out.println("Uventet fejl: " + e.getMessage());
             e.printStackTrace();
         }
+        return null;
     }
 
     private Team helperMethod(ResultSet rs) throws SQLException {

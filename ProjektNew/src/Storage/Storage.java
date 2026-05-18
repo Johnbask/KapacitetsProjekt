@@ -1,5 +1,7 @@
 package Storage;
 
+import Model.Medarbejder;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -30,7 +32,7 @@ public abstract class Storage<T> {
 
     public abstract void update(T t) throws SQLException;
 
-    public abstract void delete(int id) throws SQLException;
+    public abstract Medarbejder delete(int id) throws SQLException;
 
     protected void handleSQLException(SQLException e) {};
 }

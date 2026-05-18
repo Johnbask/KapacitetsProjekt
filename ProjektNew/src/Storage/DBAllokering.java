@@ -1,6 +1,7 @@
 package Storage;
 
 import Model.Allokering;
+import Model.Medarbejder;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -43,7 +44,12 @@ public class DBAllokering extends Storage<Allokering> {
 
     @Override
     public ArrayList<Allokering> readAll() throws SQLException {
-        String query = "SELECT allokeringsId, periode, andel, medId, projektId, behovId FROM Allokering";
+        String query = "SELECT " +
+                "a.allokeringsId, a.periode, a.andel, m.medId, p.projektId, rb.behovId " +
+                "FROM Allokering a " +
+                "LEFT JOIN Medarbejder m ON a.medId = m.medId " +
+                "LEFT JOIN Projekt p ON a.projektId = p.projektId " +
+                "LEFT JOIN RessourceBehov rb ON a.behovId = rb.behovId";
 
         ArrayList<Allokering> allokeringer = new ArrayList<>();
 
@@ -127,7 +133,7 @@ public class DBAllokering extends Storage<Allokering> {
     }
 
     @Override
-    public void delete(int id) throws SQLException {
+    public Medarbejder delete(int id) throws SQLException {
         String query = "DELETE FROM Allokering WHERE allokeringsId = ?";
 
         try (Connection minConnection = getConnection();
@@ -149,6 +155,7 @@ public class DBAllokering extends Storage<Allokering> {
             System.out.println("Uventet fejl: " + e.getMessage());
             e.printStackTrace();
         }
+        return null;
     }
 
     @Override
@@ -166,10 +173,19 @@ public class DBAllokering extends Storage<Allokering> {
     }
 
     private Allokering helperMethod(ResultSet rs) throws SQLException {
-        return new Allokering(
+        Allokering allokering = new Allokering(
                 rs.getInt("allokeringsId"),
                 YearMonth.parse(rs.getString("periode")),
                 rs.getDouble("andel")
         );
+
+        Medarbejder medarbejder = new Medarbejder(
+                rs.getInt("medId"),
+                null, null, null, null, false, null, null, null
+        );
+
+        allokering.addMedarbejder(medarbejder);
+
+        return allokering;
     }
 }
