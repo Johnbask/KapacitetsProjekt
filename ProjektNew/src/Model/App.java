@@ -30,8 +30,8 @@ public class App {
          */
 
 
-        System.out.println(dbMedarbejder.readAll());
-        System.out.println();
+        //System.out.println(dbMedarbejder.readAll());
+        System.out.println(controller.getAlleRessourceBehov());
         /*
         System.out.println(dbMedarbejder.readById(2));
         System.out.println(dbAfdeling.readAll());

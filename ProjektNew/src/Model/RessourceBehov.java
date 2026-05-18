@@ -51,4 +51,9 @@ public class RessourceBehov {
     public Projekt getProjekt() { return projekt; }
 
     public void setProjekt(Projekt projekt) { this.projekt = projekt; }
+
+    @Override
+    public String toString() {
+        return behovId + ", " + rolle + ", " + startPeriode + ", " + slutPeriode + ", " + andel + ", " + timePris + ", " + økonomiType + "\n";
+    }
 }

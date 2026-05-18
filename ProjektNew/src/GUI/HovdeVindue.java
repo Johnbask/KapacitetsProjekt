@@ -102,8 +102,8 @@ public class HovdeVindue extends Application {
         // MEDARBEJDER VIEW
         // =====================================================
         MedarbejderOversigt medarbejderPane = new MedarbejderOversigt();
-        medarbejderPane.setMedarbejdere(List.of(m1, m2, m3));
-        medarbejderPane.setAllokeringer(allokeringer);
+        //medarbejderPane.setMedarbejdere(List.of(m1, m2, m3));
+        //medarbejderPane.setAllokeringer(allokeringer);
 
         Tab tabMedarbejder = new Tab("Medarbejder oversigt", medarbejderPane);
 
