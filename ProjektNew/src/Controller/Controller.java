@@ -5,7 +5,7 @@ import Model.Enum.Kvartal;
 import Model.Enum.MedarbejderType;
 import Model.Enum.ØkonomiType;
 import Storage.*;
-import org.junit.jupiter.api.AfterAll;
+
 
 import java.sql.SQLException;
 import java.time.YearMonth;
@@ -359,9 +359,6 @@ public class Controller {
         dbAllokering.delete(allokeringsId);
     }
 
-    // TODO: CRUD AF ALLE KLASSER
-
-    // TODO: VIS ALLOKERET TID TIL MEDARBEJDER
 
     /*
     Viser en liste over alle allokeringer for den givne medarbejder

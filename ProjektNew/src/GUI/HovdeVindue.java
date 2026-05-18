@@ -11,7 +11,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
 import java.time.YearMonth;
-import java.util.ArrayList;
 import java.util.List;
 
 public class HovdeVindue extends Application {
@@ -29,50 +28,41 @@ public class HovdeVindue extends Application {
         // =====================================================
         // PROJEKT OVERSIGT
         // =====================================================
-        Tab tabProjekt = new Tab("Projekt oversigt");
-
         ProjektOversigt projektPane = new ProjektOversigt();
-        tabProjekt.setContent(projektPane);
+        Tab tabProjekt = new Tab("Projekt oversigt", projektPane);
 
         // =====================================================
         // TEAM OVERSIGT
         // =====================================================
-        Tab tabTeams = new Tab("Team oversigt");
-
         TeamOversigt teamPane = new TeamOversigt();
+        Tab tabTeams = new Tab("Team oversigt", teamPane);
 
         Team t1 = new Team(1, "Backend");
         Team t2 = new Team(2, "Frontend");
         Team t3 = new Team(3, "DevOps");
 
         teamPane.setTeams(List.of(t1, t2, t3));
-        tabTeams.setContent(teamPane);
 
         // =====================================================
         // MEDARBEJDERE
         // =====================================================
         Medarbejder m1 = new Medarbejder(1, "JH", "Jonas Hansen",
-                MedarbejderType.INTERN, "Developer", false, null, null, null);
+                MedarbejderType.INTERN, "Developer", false, null, null, t1);
 
         Medarbejder m2 = new Medarbejder(2, "MK", "Mette Kristensen",
-                MedarbejderType.INTERN, "Tester", false, null, null, null);
+                MedarbejderType.INTERN, "Tester", false, null, null, t2);
 
         Medarbejder m3 = new Medarbejder(3, "AB", "Anders Berg",
-                MedarbejderType.EKSTERN, "Architect", false, null, null, null);
+                MedarbejderType.EKSTERN, "Architect", false, null, null, t3);
 
-
-
-
+        t1.addMedarbejder(m1);
+        t2.addMedarbejder(m2);
+        t3.addMedarbejder(m3);
 
         // =====================================================
         // ALLOKERINGER
         // =====================================================
-        List<Allokering> allokeringer = new ArrayList<>();
-
         Allokering a1 = new Allokering(1, YearMonth.of(2026, 11), 0.8);
-        a1.addMedarbejder(m1);
-
-        Allokering a1_2 = new Allokering(1, YearMonth.of(2027, 11), 0.8);
         a1.addMedarbejder(m1);
 
         Allokering a2 = new Allokering(2, YearMonth.of(2026, 12), 0.6);
@@ -105,114 +95,40 @@ public class HovdeVindue extends Application {
         Allokering a11 = new Allokering(11, YearMonth.of(2027, 1), 0.6);
         a11.addMedarbejder(m3);
 
-        List<Allokering> allokeringList = List.of(
-                a1, a1_2,a2,a3,a4,
-                a5,a6,a7,
-                a8,a9,a10,a11
+        List<Allokering> allokeringer = List.of(
+                a1, a2, a3, a4,
+                a5, a6, a7,
+                a8, a9, a10, a11
         );
 
         // =====================================================
         // PROJEKTER
         // =====================================================
-
         Projekt p1 = new Projekt(1, "System A");
-        p1.addRessourceBehov(new RessourceBehov(
-                1, "Developer", YearMonth.of(2026, 11),
-                0.8, 850, ØkonomiType.CAPEX));
-        p1.addRessourceBehov(new RessourceBehov(
-                2, "Developer", YearMonth.of(2026, 12),
-                0.6, 850, ØkonomiType.CAPEX));
-        p1.addRessourceBehov(new RessourceBehov(
-                3, "Developer", YearMonth.of(2027, 1),
-                0.9, 850, ØkonomiType.CAPEX));
-
         Projekt p2 = new Projekt(2, "System B");
-        p2.addRessourceBehov(new RessourceBehov(
-                4, "Tester", YearMonth.of(2026, 12),
-                0.5, 700, ØkonomiType.CAPEX));
-        p2.addRessourceBehov(new RessourceBehov(
-                5, "Tester", YearMonth.of(2027, 1),
-                0.7, 700, ØkonomiType.CAPEX));
-        p2.addRessourceBehov(new RessourceBehov(
-                6, "Tester", YearMonth.of(2027, 2),
-                0.6, 700, ØkonomiType.CAPEX));
 
-        Projekt p3 = new Projekt(3, "Quick Fix");
-        p3.addRessourceBehov(new RessourceBehov(
-                7, "Consultant", YearMonth.of(2027, 1),
-                1.0, 1200, ØkonomiType.CAPEX));
-        p3.addRessourceBehov(new RessourceBehov(
-                8, "Consultant", YearMonth.of(2027, 2),
-                0.5, 1200, ØkonomiType.CAPEX));
+        // (valgfrit hvis du bruger behov senere)
+        p1.addRessourceBehov(new RessourceBehov(1, "Dev", YearMonth.of(2026, 9), 2, 850, ØkonomiType.CAPEX));
+        p2.addRessourceBehov(new RessourceBehov(2, "Test", YearMonth.of(2026, 10), 1, 700, ØkonomiType.OPEX));
 
-        Projekt p4 = new Projekt(4, "Enterprise Platform");
-        p4.addRessourceBehov(new RessourceBehov(
-                10, "Architect", YearMonth.of(2026, 9),
-                1.0, 1200, ØkonomiType.CAPEX));
-        p4.addRessourceBehov(new RessourceBehov(
-                11, "Developer", YearMonth.of(2026, 10),
-                0.8, 850, ØkonomiType.CAPEX));
-        p4.addRessourceBehov(new RessourceBehov(
-                12, "Developer", YearMonth.of(2026, 11),
-                0.8, 850, ØkonomiType.CAPEX));
-        p4.addRessourceBehov(new RessourceBehov(
-                13, "Developer", YearMonth.of(2026, 12),
-                0.7, 850, ØkonomiType.CAPEX));
-        p4.addRessourceBehov(new RessourceBehov(
-                14, "Tester", YearMonth.of(2027, 1),
-                0.6, 700, ØkonomiType.CAPEX));
-        p4.addRessourceBehov(new RessourceBehov(
-                15, "Tester", YearMonth.of(2027, 2),
-                0.6, 700, ØkonomiType.CAPEX));
-        p4.addRessourceBehov(new RessourceBehov(
-                16, "Developer", YearMonth.of(2027, 3),
-                0.5, 850, ØkonomiType.CAPEX));
-        p4.addRessourceBehov(new RessourceBehov(
-                17, "Developer", YearMonth.of(2027, 4),
-                0.5, 850, ØkonomiType.CAPEX));
-        p4.addRessourceBehov(new RessourceBehov(
-                18, "Support", YearMonth.of(2027, 5),
-                0.3, 600, ØkonomiType.CAPEX));
-        p4.addRessourceBehov(new RessourceBehov(
-                19, "Support", YearMonth.of(2027, 6),
-                0.3, 600, ØkonomiType.CAPEX));
-
-        a1.setProjekt(p1);
-        a2.setProjekt(p1);
-        a3.setProjekt(p1);
-        a4.setProjekt(p1);
-
-        a5.setProjekt(p2);
-        a6.setProjekt(p2);
-        a7.setProjekt(p2);
-
-        a8.setProjekt(p4);
-        a9.setProjekt(p4);
-        a10.setProjekt(p4);
-        a11.setProjekt(p4);
-
-        a10.setProjekt(p3);
-        a11.setProjekt(p4);
-
-        List<Projekt> projekter = List.of(p1, p2, p3, p4);
-        projektPane.buildTimeline(projekter);
+        projektPane.buildTimeline(List.of(p1, p2));
 
         // =====================================================
-        // MEDARBEJDER VIEW (IMPORTANT FIX)
+        // MEDARBEJDER VIEW  (VIGTIG FIX HER)
         // =====================================================
         MedarbejderOversigt medarbejderPane = new MedarbejderOversigt();
-
         medarbejderPane.setMedarbejdere(List.of(m1, m2, m3));
-        medarbejderPane.setAllokeringer(allokeringList);
+        medarbejderPane.setAllokeringer(allokeringer);
 
-
-        Tab tabMedarbejder = new Tab("Medarbejder oversigt");
-        tabMedarbejder.setContent(medarbejderPane);
+        Tab tabMedarbejder = new Tab("Medarbejder oversigt", medarbejderPane);
 
         // =====================================================
-        // BEHOV
+        // BEHOV VIEW
         // =====================================================
-        Tab tabBehov = new Tab("Behov oversigt");
+        BehovOversigt behovPane = new BehovOversigt();
+        behovPane.setProjekter(List.of(p1, p2));
+
+        Tab tabBehov = new Tab("Behov oversigt", behovPane);
 
         // =====================================================
         // ADD TABS
@@ -226,7 +142,7 @@ public class HovdeVindue extends Application {
 
         pane.setCenter(tabPane);
 
-        Scene scene = new Scene(pane, 1100, 600);
+        Scene scene = new Scene(pane, 1200, 650);
         stage.setScene(scene);
         stage.show();
     }
