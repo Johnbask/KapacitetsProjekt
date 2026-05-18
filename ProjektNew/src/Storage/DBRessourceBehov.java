@@ -15,57 +15,46 @@ public class DBRessourceBehov extends Storage<RessourceBehov> {
 
     @Override
     public void insert(RessourceBehov rb) throws SQLException {
-        String query = "INSERT INTO RessourceBehov (behovId, rolle, periode, andel, timePris, økonomiType, projektId) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        String query = "INSERT INTO RessourceBehov " +
+                "(behovId, rolle, startPeriode, slutPeriode, andel, timePris, økonomiType, projektId) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection minConnection = getConnection();
              PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
             pstmt.setInt(1, rb.getBehovId());
             pstmt.setString(2, rb.getRolle());
-            pstmt.setString(3, rb.getPeriode().toString());
-            pstmt.setDouble(4, rb.getAndel());
-            pstmt.setDouble(5, rb.getTimePris());
-            pstmt.setString(6, rb.getØkonomiType().name());
-            pstmt.setInt(7, rb.getProjekt().getProjektId());
+            pstmt.setString(3, rb.getStartPeriode().toString());
+            pstmt.setString(4, rb.getSlutPeriode().toString());
+            pstmt.setDouble(5, rb.getAndel());
+            pstmt.setDouble(6, rb.getTimePris());
+            pstmt.setString(7, rb.getØkonomiType().name());
+            pstmt.setInt(8, rb.getProjekt().getProjektId());
 
-            int rows = pstmt.executeUpdate();
-
-            if (rows > 0) {
-                System.out.println("RessourceBehov indsat korrekt!");
-            } else {
-                System.out.println("Noget gik galt - Ingen data indsat.");
-            }
+            pstmt.executeUpdate();
 
         } catch (SQLException e) {
             handleSQLException(e);
-        } catch (Exception e) {
-            System.out.println("Uventet fejl: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
     @Override
     public ArrayList<RessourceBehov> readAll() throws SQLException {
-        String query = "SELECT " +
-                "behovId, rolle, periode, andel, timePris, økonomiType, projektId " +
+
+        String query = "SELECT behovId, rolle, startPeriode, slutPeriode, andel, timePris, økonomiType, projektId " +
                 "FROM RessourceBehov";
 
         ArrayList<RessourceBehov> liste = new ArrayList<>();
 
-        try  (Connection minConnection = getConnection();
-              PreparedStatement pstmt = minConnection.prepareStatement(query);
-              ResultSet rs = pstmt.executeQuery()) {
+        try (Connection con = getConnection();
+             PreparedStatement pstmt = con.prepareStatement(query);
+             ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
                 liste.add(helperMethod(rs));
             }
 
-        } catch (SQLException e) {
-            handleSQLException(e);
-        } catch (Exception e) {
-            System.out.println("Uventet fejl: " + e.getMessage());
-            e.printStackTrace();
         }
 
         return liste;
@@ -73,114 +62,84 @@ public class DBRessourceBehov extends Storage<RessourceBehov> {
 
     @Override
     public RessourceBehov readById(int id) throws SQLException {
-        String query = "SELECT " +
-                "behovId, rolle, periode, andel, timePris, økonomiType, projektId " +
-                "FROM RessourceBehov " +
-                "WHERE behovId = ?";
 
-        RessourceBehov rb = null;
+        String query = "SELECT behovId, rolle, startPeriode, slutPeriode, andel, timePris, økonomiType, projektId " +
+                "FROM RessourceBehov WHERE behovId = ?";
 
-        try (Connection minConnection = getConnection();
-             PreparedStatement pstmt = minConnection.prepareStatement(query)){
+        try (Connection con = getConnection();
+             PreparedStatement pstmt = con.prepareStatement(query)) {
 
             pstmt.setInt(1, id);
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    rb = helperMethod(rs);
-                } else {
-                    System.out.println("Ingen Ressource Behov fundet med id: " + id);
+                    return helperMethod(rs);
                 }
             }
-
-        } catch (SQLException e) {
-            handleSQLException(e);
-        } catch (Exception e) {
-            System.out.println("Uventet fejl: " + e.getMessage());
-            e.printStackTrace();
         }
-        return rb;
+
+        return null;
     }
 
     @Override
     public void update(RessourceBehov rb) throws SQLException {
-        String query = "UPDATE RessourceBehov " +
-                "SET rolle = ?, periode = ?, andel = ?, timePris = ?, økonomiType = ?, projektId = ? " +
+
+        String query = "UPDATE RessourceBehov SET " +
+                "rolle = ?, startPeriode = ?, slutPeriode = ?, andel = ?, timePris = ?, økonomiType = ?, projektId = ? " +
                 "WHERE behovId = ?";
 
-        try (Connection minConnection = getConnection();
-             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
+        try (Connection con = getConnection();
+             PreparedStatement pstmt = con.prepareStatement(query)) {
 
             pstmt.setString(1, rb.getRolle());
-            pstmt.setString(2, rb.getPeriode().toString());
-            pstmt.setDouble(3, rb.getAndel());
-            pstmt.setDouble(4, rb.getTimePris());
-            pstmt.setString(5, rb.getØkonomiType().name());
-            pstmt.setInt(6, rb.getProjekt().getProjektId());
-            pstmt.setInt(7, rb.getBehovId());
+            pstmt.setString(2, rb.getStartPeriode().toString());
+            pstmt.setString(3, rb.getSlutPeriode().toString());
+            pstmt.setDouble(4, rb.getAndel());
+            pstmt.setDouble(5, rb.getTimePris());
+            pstmt.setString(6, rb.getØkonomiType().name());
+            pstmt.setInt(7, rb.getProjekt().getProjektId());
+            pstmt.setInt(8, rb.getBehovId());
 
-            int rows = pstmt.executeUpdate();
-
-            if (rows > 0) {
-                System.out.println("RessourceBehov opdateret korrekt!");
-            } else {
-                System.out.println("Noget gik galt - Ingen data indsat.");
-            }
-
-        } catch (SQLException e) {
-            handleSQLException(e);
-        } catch (Exception e) {
-            System.out.println("Uventet fejl: " + e.getMessage());
-            e.printStackTrace();
+            pstmt.executeUpdate();
         }
     }
 
     @Override
     public Medarbejder delete(int id) throws SQLException {
+
         String query = "DELETE FROM RessourceBehov WHERE behovId = ?";
 
-        try (Connection minConnection = getConnection();
-             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
+        try (Connection con = getConnection();
+             PreparedStatement pstmt = con.prepareStatement(query)) {
 
             pstmt.setInt(1, id);
-
-            int rows = pstmt.executeUpdate();
-
-            if (rows > 0) {
-                System.out.println("RessourceBehov deleted korrekt!");
-            } else {
-                System.out.println("Noget gik galt - Ingen data deleted.");
-            }
-
-        } catch (SQLException e) {
-            handleSQLException(e);
-        } catch (Exception e) {
-            System.out.println("Uventet fejl: " + e.getMessage());
-            e.printStackTrace();
+            pstmt.executeUpdate();
         }
+
         return null;
     }
 
     @Override
     protected void handleSQLException(SQLException e) {
+
         System.out.println("Fejl: " + e.getMessage());
-        System.out.println("Fejlkode: " + e.getErrorCode());
 
         String besked = switch (e.getErrorCode()) {
-            case 2627 -> "behovId findes allerede (duplikat-fejl)";
-            case 547 -> "projektId findes ikke i Projekt-tabellen (FK-fejl)";
-            case 8152 -> "Værdien er for lang til kolonnen (f.eks. rolle eller økonomiType)";
-            default -> "Ukendt fejl [" + e.getErrorCode() + "]: " + e.getMessage();
+            case 2627 -> "Duplikat behovId";
+            case 547 -> "FK fejl (projekt findes ikke)";
+            default -> "Ukendt SQL fejl: " + e.getErrorCode();
         };
 
-        System.out.println("Fejl: " + besked);
+        System.out.println(besked);
     }
 
     private RessourceBehov helperMethod(ResultSet rs) throws SQLException {
+
         return new RessourceBehov(
                 rs.getInt("behovId"),
                 rs.getString("rolle"),
-                YearMonth.parse(rs.getString("periode")),
+                YearMonth.parse(rs.getString("startPeriode")),
+                YearMonth.parse(rs.getString("slutPeriode")),
                 rs.getDouble("andel"),
                 rs.getDouble("timePris"),
                 ØkonomiType.valueOf(rs.getString("økonomiType"))

@@ -37,6 +37,7 @@ public class ProjektOversigt extends GridPane {
     }
 
     private void initContent() {
+
         this.setPadding(new Insets(10));
         this.setVgap(10);
 
@@ -82,24 +83,23 @@ public class ProjektOversigt extends GridPane {
         YearMonth min = null;
         YearMonth max = null;
 
+        // FIND GLOBAL RANGE
         for (Projekt projekt : projekter) {
             for (RessourceBehov rb : projekt.getRessourceBehov()) {
 
-                YearMonth periode = rb.getPeriode();
-
-                if (min == null || periode.isBefore(min)) {
-                    min = periode;
+                if (min == null || rb.getStartPeriode().isBefore(min)) {
+                    min = rb.getStartPeriode();
                 }
 
-                if (max == null || periode.isAfter(max)) {
-                    max = periode;
+                if (max == null || rb.getSlutPeriode().isAfter(max)) {
+                    max = rb.getSlutPeriode();
                 }
             }
         }
 
         if (min == null || max == null) return;
 
-
+        // HEADER
         YearMonth current = min;
         int col = 1;
 
@@ -111,7 +111,6 @@ public class ProjektOversigt extends GridPane {
             int year = current.getYear();
             int month = current.getMonthValue();
             int quarter = ((month - 1) / 3) + 1;
-
 
             if (year != currentYear) {
                 Label lblYear = new Label(String.valueOf(year));
@@ -128,7 +127,6 @@ public class ProjektOversigt extends GridPane {
                 currentQuarter = -1;
             }
 
-
             if (quarter != currentQuarter) {
                 Label lblQuarter = new Label("Q" + quarter);
                 lblQuarter.setMinSize(80, 25);
@@ -143,7 +141,6 @@ public class ProjektOversigt extends GridPane {
                 currentQuarter = quarter;
             }
 
-
             Label lblMonth = new Label(
                     current.getMonth().name().substring(0, 3)
             );
@@ -157,6 +154,7 @@ public class ProjektOversigt extends GridPane {
             col++;
         }
 
+        // PROJECT ROWS
         int startRow = 3;
 
         for (int i = 0; i < projekter.size(); i++) {
@@ -187,14 +185,27 @@ public class ProjektOversigt extends GridPane {
                 boolean filled = false;
 
                 for (RessourceBehov rb : projekt.getRessourceBehov()) {
-                    if (rb.getPeriode().equals(current)) {
-                        cell.setStyle(
-                                "-fx-background-color: " + color + ";" +
-                                        "-fx-border-color: black;"
-                        );
-                        filled = true;
-                        break;
+
+                    YearMonth start = rb.getStartPeriode();
+                    YearMonth slut = rb.getSlutPeriode();
+
+                    YearMonth temp = start;
+
+                    while (!temp.isAfter(slut)) {
+
+                        if (temp.equals(current)) {
+                            cell.setStyle(
+                                    "-fx-background-color: " + color + ";" +
+                                            "-fx-border-color: black;"
+                            );
+                            filled = true;
+                            break;
+                        }
+
+                        temp = temp.plusMonths(1);
                     }
+
+                    if (filled) break;
                 }
 
                 if (!filled) {
@@ -209,7 +220,9 @@ public class ProjektOversigt extends GridPane {
         }
     }
 
-
+    // =====================================================
+    // CREATE PROJECT WINDOW
+    // =====================================================
     private void createProjektWindow() {
 
         Stage stage = new Stage();
@@ -242,6 +255,9 @@ public class ProjektOversigt extends GridPane {
         stage.showAndWait();
     }
 
+    // =====================================================
+    // EDIT PROJECT WINDOW
+    // =====================================================
     private void editProjektWindow() {
 
         if (projekter == null || projekter.isEmpty()) return;

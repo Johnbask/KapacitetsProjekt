@@ -37,8 +37,6 @@ public class HovdeVindue extends Application {
         TeamOversigt teamPane = new TeamOversigt();
         Tab tabTeams = new Tab("Team oversigt", teamPane);
 
-        tabTeams.setContent(teamPane);
-
         // =====================================================
         // MEDARBEJDERE
         // =====================================================
@@ -51,63 +49,57 @@ public class HovdeVindue extends Application {
         Medarbejder m3 = new Medarbejder(3, "AB", "Anders Berg",
                 MedarbejderType.EKSTERN, "Architect", false, null, null, null);
 
-
         // =====================================================
         // ALLOKERINGER
         // =====================================================
-        Allokering a1 = new Allokering(1, YearMonth.of(2026, 11), 0.8);
-        a1.addMedarbejder(m1);
-
-        Allokering a2 = new Allokering(2, YearMonth.of(2026, 12), 0.6);
-        a2.addMedarbejder(m1);
-
-        Allokering a3 = new Allokering(3, YearMonth.of(2027, 1), 0.9);
-        a3.addMedarbejder(m1);
-
-        Allokering a4 = new Allokering(4, YearMonth.of(2027, 2), 0.7);
-        a4.addMedarbejder(m1);
-
-        Allokering a5 = new Allokering(5, YearMonth.of(2026, 12), 0.5);
-        a5.addMedarbejder(m2);
-
-        Allokering a6 = new Allokering(6, YearMonth.of(2027, 1), 0.6);
-        a6.addMedarbejder(m2);
-
+        Allokering a1 = new Allokering(1, YearMonth.of(2026, 9), 0.8);
+        Allokering a2 = new Allokering(2, YearMonth.of(2026, 10), 0.6);
+        Allokering a3 = new Allokering(3, YearMonth.of(2026, 11), 0.9);
+        Allokering a4 = new Allokering(4, YearMonth.of(2026, 12), 0.7);
+        Allokering a5 = new Allokering(5, YearMonth.of(2027, 1), 0.5);
+        Allokering a6 = new Allokering(6, YearMonth.of(2027, 2), 0.6);
         Allokering a7 = new Allokering(7, YearMonth.of(2027, 3), 0.4);
-        a7.addMedarbejder(m2);
 
-        Allokering a8 = new Allokering(8, YearMonth.of(2026, 9), 1.0);
-        a8.addMedarbejder(m3);
+        a1.addMedarbejder(m1);
+        a2.addMedarbejder(m1);
+        a3.addMedarbejder(m1);
+        a4.addMedarbejder(m2);
+        a5.addMedarbejder(m2);
+        a6.addMedarbejder(m3);
+        a7.addMedarbejder(m3);
 
-        Allokering a9 = new Allokering(9, YearMonth.of(2026, 10), 1.0);
-        a9.addMedarbejder(m3);
-
-        Allokering a10 = new Allokering(10, YearMonth.of(2026, 11), 0.8);
-        a10.addMedarbejder(m3);
-
-        Allokering a11 = new Allokering(11, YearMonth.of(2027, 1), 0.6);
-        a11.addMedarbejder(m3);
-
-        List<Allokering> allokeringer = List.of(
-                a1, a2, a3, a4,
-                a5, a6, a7,
-                a8, a9, a10, a11
-        );
+        List<Allokering> allokeringer = List.of(a1, a2, a3, a4, a5, a6, a7);
 
         // =====================================================
-        // PROJEKTER
+        // PROJEKTER + BEHOV (VIGTIG RETTELSE HER)
         // =====================================================
         Projekt p1 = new Projekt(1, "System A");
         Projekt p2 = new Projekt(2, "System B");
 
-        // (valgfrit hvis du bruger behov senere)
-        p1.addRessourceBehov(new RessourceBehov(1, "Dev", YearMonth.of(2026, 9), 2, 850, ØkonomiType.CAPEX));
-        p2.addRessourceBehov(new RessourceBehov(2, "Test", YearMonth.of(2026, 10), 1, 700, ØkonomiType.OPEX));
+        // SYSTEM A (3 måneder)
+        p1.addRessourceBehov(new RessourceBehov(
+                1, "Developer",
+                YearMonth.of(2026, 9),
+                YearMonth.of(2026, 11),
+                2, 850, ØkonomiType.CAPEX));
+
+        // SYSTEM B (5 måneder)
+        p2.addRessourceBehov(new RessourceBehov(
+                2, "Tester",
+                YearMonth.of(2026, 10),
+                YearMonth.of(2027, 2),
+                1, 700, ØkonomiType.OPEX));
+
+        p2.addRessourceBehov(new RessourceBehov(
+                3, "UX",
+                YearMonth.of(2026, 11),
+                YearMonth.of(2027, 3),
+                1.5, 900, ØkonomiType.CAPEX));
 
         projektPane.buildTimeline(List.of(p1, p2));
 
         // =====================================================
-        // MEDARBEJDER VIEW  (VIGTIG FIX HER)
+        // MEDARBEJDER VIEW
         // =====================================================
         MedarbejderOversigt medarbejderPane = new MedarbejderOversigt();
         medarbejderPane.setMedarbejdere(List.of(m1, m2, m3));
