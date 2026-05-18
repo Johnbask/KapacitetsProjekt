@@ -103,7 +103,7 @@ public class Controller {
         return team;
     }
 
-    public ArrayList<Team> getAlleTems() throws SQLException {
+    public ArrayList<Team> getAlleTeams() throws SQLException {
         return dbTeam.readAll();
     }
 
@@ -444,5 +444,20 @@ public class Controller {
     */
 
     // TODO: ALLOKERLIGELIGT
+
+
+     /*
+     EFTER INTERVIEW
+      */
+
+    // TODO: Søgning af ledighed på en periode
+
+    // TODO: Kapacitets melding
+
+    // TODO: Syg melding / Barsel
+
+    // TODO: Alert at der mangler medarbejder på projekt
+
+    // TODO: simple søgning - navn
 
 }
