@@ -3,18 +3,23 @@ package GUI;
 import Controller.Controller;
 import Model.*;
 import Model.Enum.MedarbejderType;
+import Model.Enum.MeldingType;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.Optional;
 
 public class MedarbejderOversigt extends GridPane {
 
@@ -28,11 +33,16 @@ public class MedarbejderOversigt extends GridPane {
 
     private Button btnOpret;
     private Button btnRediger;
+    private Button btnOpenAllokering;
+    private Button btnUpdate;
+    private Button btnDelete;
+    private Button btnMeldinger;
 
     public MedarbejderOversigt() {
         initContent();
         initActions();
         loadMedarbejdere();
+        loadAllokering();
     }
 
     private void initContent() {
@@ -76,17 +86,46 @@ public class MedarbejderOversigt extends GridPane {
        TableColumn<Medarbejder, Afdeling> colAfdeling = new TableColumn<>("Afdeling");
        colAfdeling.setCellValueFactory(new PropertyValueFactory<>("afdeling"));
        colAfdeling.setPrefWidth(120);
+       colAfdeling.setCellFactory(col -> new TableCell<>() {
+           @Override
+           protected void updateItem(Afdeling item, boolean empty) {
+               super.updateItem(item, empty);
+               if (empty || item == null) {
+                   setText(null);
+               } else if (item.getNavn() == null || item.getNavn().isEmpty()) {
+                   setText(item.getLeder());
+               } else {
+                   setText(item.getNavn());
+               }
+           }
+       });
 
        TableColumn<Medarbejder, Organisation> colOrganisation = new TableColumn<>("Organisation");
        colOrganisation.setCellValueFactory(new PropertyValueFactory<>("organisation"));
        colOrganisation.setPrefWidth(120);
+       colOrganisation.setCellFactory(col -> new TableCell<>() {
+           @Override
+           protected void updateItem(Organisation item, boolean empty) {
+               super.updateItem(item, empty);
+               setText(empty || item == null ? null : item.getNavn());
+           }
+       });
 
        TableColumn<Medarbejder, Team> colTeam = new TableColumn<>("Team");
        colTeam.setCellValueFactory(new PropertyValueFactory<>("team"));
        colTeam.setPrefWidth(100);
+       colTeam.setCellFactory(col -> new TableCell<>() {
+           @Override
+           protected void updateItem(Team item, boolean empty) {
+               super.updateItem(item, empty);
+               setText(empty || item == null ? null : item.getNavn());
+           }
+       });
 
        tvwMedarbejdere.getColumns().addAll(
-               colMedId, colInit, colNavn, colType, colStilling, colFratrådt, colAfdeling, colOrganisation, colTeam
+               colMedId, colInit, colNavn,
+               colType, colStilling, colFratrådt,
+               colAfdeling, colOrganisation, colTeam
        );
 
        this.add(tvwMedarbejdere, 0, 0);
@@ -98,16 +137,23 @@ public class MedarbejderOversigt extends GridPane {
 
         btnOpret = new Button("Opret Medarbejder");
         btnRediger = new Button("Rediger Medarbejder");
+        btnDelete = new Button("Slet medarbejder");
+        btnOpenAllokering = new Button("Åben allokering");
+        btnUpdate = new Button("Update");
+        btnMeldinger = new Button("Meldinger");
 
-        buttonBox.getChildren().addAll(btnOpret, btnRediger);
+        buttonBox.getChildren().addAll(btnOpret, btnRediger, btnDelete, btnOpenAllokering, btnUpdate, btnMeldinger);
 
         this.add(buttonBox, 0, 1);
 
+        /*
         tvwMedarbejdere.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
                 showTimelineWindow(newValue);
             }
         });
+
+         */
     }
 
     private void initActions() {
@@ -122,6 +168,34 @@ public class MedarbejderOversigt extends GridPane {
                 editMedarbejderWindow(selected);
             }
         });
+
+        btnUpdate.setOnAction(e -> loadMedarbejdere());
+
+        btnOpenAllokering.setOnAction(e -> {
+            Medarbejder valgtMedarbejder = tvwMedarbejdere.getSelectionModel().getSelectedItem();
+
+            if (valgtMedarbejder != null) {
+                showTimelineWindow(valgtMedarbejder);
+            } else {
+                showAlert("Vælg et team først.");
+            }
+        });
+
+        btnDelete.setOnAction(e -> {
+            Medarbejder valgtMedarbejder = tvwMedarbejdere.getSelectionModel().getSelectedItem();
+
+            if (valgtMedarbejder != null) {
+                try {
+                    deleteMedarbejderAction(valgtMedarbejder);
+                } catch (SQLException ex) {
+                    showAlert("Fejl ved sletning af medarbejder: " + ex.getMessage());
+                }
+            } else {
+                showAlert("Vælg et medarbejder først");
+            }
+        });
+
+        btnMeldinger.setOnAction(e -> meldingerWindow());
     }
 
     // ==========================================
@@ -144,6 +218,15 @@ public class MedarbejderOversigt extends GridPane {
         }
     }
 
+    public void loadAllokering() {
+        try {
+            List<Allokering> allokeringer = controller.getAlleAllokeringer();
+            this.allokeringer = allokeringer;
+        } catch (SQLException e) {
+            showAlert("Fejl ved hentning af allokeringer:" + e.getMessage());
+        }
+    }
+
     // ==========================================
     // BUILD TIMELINE
     // ==========================================
@@ -154,8 +237,7 @@ public class MedarbejderOversigt extends GridPane {
         if (allokeringer == null || allokeringer.isEmpty()) return;
 
         List<Allokering> relevant = allokeringer.stream()
-                .filter(a -> a.getMedarbejdere().contains(medarbejder))
-                .toList();
+                .filter(a -> a.getMedarbejdere().stream().anyMatch(m -> m.getMedId() == medarbejder.getMedId())).toList();
 
         if (relevant.isEmpty()) return;
 
@@ -294,25 +376,6 @@ public class MedarbejderOversigt extends GridPane {
         }
     }
 
-    private void showTimelineWindow(Medarbejder medarbejder) {
-        Stage stage = new Stage();
-        stage.setTitle("Timeline - " + medarbejder.getNavn());
-
-        timelineGrid = new GridPane();
-        timelineGrid.setHgap(2);
-        timelineGrid.setVgap(2);
-
-        scrollPane = new ScrollPane(timelineGrid);
-        scrollPane.setPrefWidth(850);
-        scrollPane.setPrefHeight(500);
-
-        buildTimeline(medarbejder);
-
-        Scene scene = new Scene(scrollPane);
-        stage.setScene(scene);
-        stage.show();
-    }
-
     // ==========================================
     // CREATE WINDOW
     // ==========================================
@@ -329,9 +392,9 @@ public class MedarbejderOversigt extends GridPane {
         TextField txfInitialer = new TextField();
         TextField txfNavn = new TextField();
         TextField txfStilling = new TextField();
-        TextField txfAfdId = new TextField();
-        TextField txfOrgId = new TextField();
-        TextField txfTeamId = new TextField();
+        TextField txfAfdNavn = new TextField();
+        TextField txfOrgNavn = new TextField();
+        TextField txfTeamNavn = new TextField();
         ComboBox<MedarbejderType> cmbType = new ComboBox<>();
         cmbType.getItems().addAll(MedarbejderType.values());
 
@@ -347,14 +410,14 @@ public class MedarbejderOversigt extends GridPane {
         pane.add(new Label("Type:"), 0, 3);
         pane.add(cmbType, 1, 3);
 
-        pane.add(new Label("Afdeling ID:"), 0, 4);
-        pane.add(txfAfdId, 1, 4);
+        pane.add(new Label("Afdeling navn/leder"), 0, 4);
+        pane.add(txfAfdNavn, 1, 4);
 
-        pane.add(new Label("Org. ID:"), 0, 5);
-        pane.add(txfOrgId, 1, 5);
+        pane.add(new Label("Org. navn"), 0, 5);
+        pane.add(txfOrgNavn, 1, 5);
 
-        pane.add(new Label("Team ID:"), 0, 6);
-        pane.add(txfTeamId, 1, 6);
+        pane.add(new Label("Team navn"), 0, 6);
+        pane.add(txfTeamNavn, 1, 6);
 
         Button btnGem = new Button("Gem");
         Button btnCancel = new Button("Luk");
@@ -366,15 +429,15 @@ public class MedarbejderOversigt extends GridPane {
                 Medarbejder ny = null;
                 try {
                     ny = controller.createMedarbejder(
-                            0,
+                            getNextMedId(),
                             txfInitialer.getText(),
                             txfNavn.getText(),
                             cmbType.getValue(),
                             txfStilling.getText(),
                             false,
-                            Integer.parseInt(txfAfdId.getText()),
-                            Integer.parseInt(txfOrgId.getText()),
-                            Integer.parseInt(txfTeamId.getText())
+                            txfAfdNavn.getText(),
+                            txfOrgNavn.getText(),
+                            txfTeamNavn.getText()
                     );
 
                     if (ny != null) {
@@ -392,7 +455,7 @@ public class MedarbejderOversigt extends GridPane {
 
         btnCancel.setOnAction(e -> stage.close());
 
-        stage.setScene(new Scene(pane, 350, 220));
+        stage.setScene(new Scene(pane, 350, 350));
         stage.showAndWait();
     }
 
@@ -412,12 +475,13 @@ public class MedarbejderOversigt extends GridPane {
         TextField txfInitialer = new TextField(medarbejder.getInitialer());
         TextField txfNavn = new TextField(medarbejder.getNavn());
         TextField txfStilling = new TextField(medarbejder.getStilling());
-        TextField txfAfdId = new TextField(medarbejder.getAfdeling() != null
-                ? String.valueOf(medarbejder.getAfdeling().getAfdId()) : "");
-        TextField txfOrgId = new TextField(medarbejder.getOrganisation() != null
-                ? String.valueOf(medarbejder.getOrganisation().getOrgId()) : "");
-        TextField txfTeamId = new TextField(medarbejder.getTeam() != null
-                ? String.valueOf(medarbejder.getTeam().getTeamId()) : "");
+        TextField txfAfdNavn = new TextField(medarbejder.getAfdeling() != null ?
+                (medarbejder.getAfdeling().getNavn() == null || medarbejder.getAfdeling().getNavn().isEmpty()
+                 ? medarbejder.getAfdeling().getLeder() : medarbejder.getAfdeling().getNavn()) : "");
+        TextField txfOrgNavn = new TextField(medarbejder.getOrganisation() != null ?
+                medarbejder.getOrganisation().getNavn() : "");
+        TextField txfTeamNavn = new TextField(medarbejder.getTeam() != null ?
+                medarbejder.getTeam().getNavn() : "");
 
         ComboBox<MedarbejderType> cmbType = new ComboBox<>();
         cmbType.getItems().addAll(MedarbejderType.values());
@@ -441,14 +505,20 @@ public class MedarbejderOversigt extends GridPane {
         pane.add(new Label("Fratrådt"), 0, 4);
         pane.add(chkFratrådt, 1, 4);
 
-        pane.add(new Label("Afdeling ID:"), 0, 5);
-        pane.add(txfAfdId, 1, 5);
+        pane.add(new Label("Afdeling Navn/leder:"), 0, 5);
+        pane.add(txfAfdNavn, 1, 5);
 
-        pane.add(new Label("Org. ID:"), 0, 6);
-        pane.add(txfOrgId, 1, 6);
+        pane.add(new Label("Org. Navn:"), 0, 6);
+        pane.add(txfOrgNavn, 1, 6);
 
-        pane.add(new Label("Team ID:"), 0, 7);
-        pane.add(txfTeamId, 1, 7);
+        pane.add(new Label("Team Navn:"), 0, 7);
+        pane.add(txfTeamNavn, 1, 7);
+
+        /*
+        =====================
+        |       Buttons     |
+        =====================
+         */
 
         Button btnGem = new Button("Gem");
         Button btnSlet = new Button("Slet");
@@ -466,9 +536,9 @@ public class MedarbejderOversigt extends GridPane {
                         cmbType.getValue(),
                         txfStilling.getText(),
                         chkFratrådt.isSelected(),
-                        Integer.parseInt(txfAfdId.getText()),
-                        Integer.parseInt(txfOrgId.getText()),
-                        Integer.parseInt(txfTeamId.getText())
+                        txfAfdNavn.getText(),
+                        txfOrgNavn.getText(),
+                        txfTeamNavn.getText()
                 );
 
                 tvwMedarbejdere.getItems().set(tvwMedarbejdere.getItems().indexOf(medarbejder), opdateret);
@@ -495,6 +565,320 @@ public class MedarbejderOversigt extends GridPane {
 
         stage.setScene(new Scene(pane, 350, 380));
         stage.showAndWait();
+    }
+
+    /*
+    =============================================
+    |                Meldinger                  |
+    =============================================
+     */
+
+    private void meldingerWindow() {
+        Stage stage = new Stage();
+        stage.setTitle("Meldinger af medarbejdere");
+
+        BorderPane root = new BorderPane();
+        root.setPadding(new Insets(10));
+
+        /*
+        =========================
+        |       Search(Top)     |
+        =========================
+         */
+
+        TextField txfSøg = new TextField();
+        txfSøg.setPromptText("Søg på medarbejder navn...");
+        txfSøg.setPrefWidth(250);
+
+        Button btnSøg = new Button("Søg");
+        Button btnVis = new Button("Vis alle");
+
+        HBox searchBox = new HBox(10, new Label("Søg:"), txfSøg, btnSøg, btnVis);
+        searchBox.setAlignment(Pos.CENTER_LEFT);
+        searchBox.setPadding(new Insets(0, 0, 10, 0));
+
+        root.setTop(searchBox);
+
+        /*
+        =========================
+        |       TABLEVIEW       |
+        =========================
+         */
+
+        TableView<Melding> tvwMelding = new TableView<>();
+        tvwMelding.setPrefSize(900, 300);
+
+        /*
+        int meldingsId,
+        MeldingType type,
+        LocalDate startDato,
+        LocalDate slutDato,
+        String noter,
+        Medarbejder medarbejder
+         */
+        TableColumn<Melding, Integer> colId = new TableColumn<>("Meldings ID");
+        colId.setCellValueFactory(new PropertyValueFactory<>("meldingsId"));
+        colId.setPrefWidth(80);
+
+        TableColumn<Melding, MeldingType> colType = new TableColumn<>("Meldings type");
+        colType.setCellValueFactory(new PropertyValueFactory<>("type"));
+        colType.setPrefWidth(100);
+
+        TableColumn<Melding, LocalDate> colStart = new TableColumn<>("Start Dato");
+        colStart.setCellValueFactory(new PropertyValueFactory<>("startDato"));
+        colStart.setPrefWidth(100);
+
+        TableColumn<Melding, LocalDate> colSlut = new TableColumn<>("Slut Dato");
+        colSlut.setCellValueFactory(new PropertyValueFactory<>("slutDato"));
+        colSlut.setPrefWidth(100);
+
+        TableColumn<Melding, String> colNoter = new TableColumn<>("Noter");
+        colNoter.setCellValueFactory(new PropertyValueFactory<>("noter"));
+        colNoter.setPrefWidth(200);
+
+        TableColumn<Melding, Medarbejder> colMedarbejder = new TableColumn<>("Medarbejder");
+        colMedarbejder.setCellValueFactory(new PropertyValueFactory<>("medarbejder"));
+        colMedarbejder.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(Medarbejder item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.getNavn());
+            }
+        });
+        colMedarbejder.setPrefWidth(150);
+
+        tvwMelding.getColumns().addAll(
+          colId, colType, colStart, colSlut, colNoter, colMedarbejder
+        );
+
+        try {
+            List<Melding> meldinger = controller.getAlleMeldinger();
+            tvwMelding.getItems().setAll(meldinger);
+        } catch (SQLException e) {
+            showAlert("Fejl ved hentning af meldinger:\n" + e.getMessage());
+        }
+
+        root.setCenter(tvwMelding);
+        /*
+        =============================
+        |       Opret melding       |
+        =============================
+         */
+
+        GridPane pane = new GridPane();
+        pane.setPadding(new Insets(10, 0, 0, 0));
+        pane.setHgap(10);
+        pane.setVgap(6);
+
+        ComboBox<MeldingType> cmbType = new ComboBox<>();
+        cmbType.getItems().addAll(MeldingType.values());
+
+        TextField txfStartDato = new TextField();
+        txfStartDato.setPromptText("YYYY-MM-DD");
+
+        TextField txfSlutDato = new TextField();
+        txfSlutDato.setPromptText("YYYY-MM-DD");
+
+        TextArea txaNoter = new TextArea();
+        txaNoter.setPrefRowCount(2);
+
+        TextField txfMedarbejderNavn = new TextField();
+        txfMedarbejderNavn.setPromptText("Medarbejder navn");
+
+        pane.add(new Label("Type:"),             0, 0); pane.add(cmbType,            1, 0);
+        pane.add(new Label("Start dato:"),       0, 1); pane.add(txfStartDato,       1, 1);
+        pane.add(new Label("Slut dato:"),        0, 2); pane.add(txfSlutDato,        1, 2);
+        pane.add(new Label("Noter:"),            0, 3); pane.add(txaNoter,           1, 3);
+        pane.add(new Label("Medarbejder Navn:"), 0, 4); pane.add(txfMedarbejderNavn, 1, 4);
+
+        Button btnOpret = new Button("Opret Melding");
+        Button btnRediger = new Button("Gem ændringer");
+        Button btnDelete = new Button("Slet Melding");
+        Button btnLuk = new Button("Luk");
+
+        HBox btnBox = new HBox(10, btnOpret, btnRediger, btnDelete, btnLuk);
+        btnBox.setPadding(new Insets(8, 0, 0, 0));
+
+        VBox bottom = new VBox(10, pane, btnBox);
+        root.setBottom(bottom);
+
+        tvwMelding.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                cmbType.setValue(newValue.getType());
+                txfStartDato.setText(newValue.getStartDato().toString());
+                txfSlutDato.setText(newValue.getSlutDato().toString());
+                txaNoter.setText(newValue.getNoter());
+                txfMedarbejderNavn.setText(newValue.getMedarbejder().getNavn());
+            }
+        });
+
+        /*
+        =============================
+        |       Button Actions      |
+        =============================
+         */
+        btnSøg.setOnAction(e -> {
+            String søgeord = txfSøg.getText().trim();
+            if (søgeord.isEmpty()) {
+                showAlert("Skriv et navn at søge på.");
+                return;
+            }
+
+            try {
+                tvwMelding.getItems().setAll(controller.getMeldingerForMedarbejder(søgeord));
+            } catch (SQLException ex) {
+                showAlert("Fejl ved søgning:\n" + ex.getMessage());
+            }
+        });
+
+        btnVis.setOnAction(e -> {
+            try {
+                tvwMelding.getItems().setAll(controller.getAlleMeldinger());
+            } catch (SQLException ex) {
+                showAlert("Fejl ved hentning:\n" + ex.getMessage());
+            }
+        });
+
+        btnOpret.setOnAction(e -> {
+            try {
+                LocalDate start = LocalDate.parse(txfStartDato.getText().trim());
+                LocalDate slut = LocalDate.parse(txfSlutDato.getText().trim());
+
+                int nextId = tvwMelding.getItems().stream().mapToInt(Melding::getMeldingsId).max().orElse(0) + 1;
+
+                Melding ny = controller.createMelding(
+                        nextId,
+                        cmbType.getValue(),
+                        start, slut,
+                        txaNoter.getText().trim(),
+                        txfMedarbejderNavn.getText().trim()
+                );
+
+                if (ny != null) {
+                    tvwMelding.getItems().add(ny);
+                } else {
+                    showAlert("Medarbejder ikke fundet");
+                }
+            } catch (Exception exception1) {
+                showAlert("Fejl ved oprettelse:\n" + exception1.getMessage());
+            }
+        });
+
+        btnRediger.setOnAction(e -> {
+            Melding valgt = tvwMelding.getSelectionModel().getSelectedItem();
+            if (valgt == null) {
+                showAlert("Vælg en melding først.");
+                return;
+            }
+
+            try {
+                LocalDate start = LocalDate.parse(txfStartDato.getText().trim());
+                LocalDate slut = LocalDate.parse(txfSlutDato.getText().trim());
+
+                Melding ny = controller.updateMelding(
+                        valgt.getMeldingsId(),
+                        cmbType.getValue(),
+                        start, slut,
+                        txaNoter.getText().trim(),
+                        txfMedarbejderNavn.getText().trim()
+                );
+
+                tvwMelding.getItems().setAll(controller.getAlleMeldinger());
+            } catch (Exception ex) {
+                showAlert("Fejl ved opdatering:\n" + ex.getMessage());
+            }
+        });
+
+        btnDelete.setOnAction(e -> {
+            Melding valgt = tvwMelding.getSelectionModel().getSelectedItem();
+            if (valgt == null) {
+                showAlert("Vælg en melding først.");
+                return;
+            }
+
+            try {
+                controller.deleteMedarbejder(valgt.getMeldingsId());
+                tvwMelding.getItems().remove(valgt);
+            } catch (SQLException ex) {
+                showAlert("Fejl ved sletning:\n" + ex.getMessage());
+            }
+        });
+
+        btnLuk.setOnAction(e -> stage.close());
+
+        stage.setScene(new Scene(root, 950, 600));
+        stage.showAndWait();
+    }
+
+    private void opretMelding() {
+        GridPane pane = new GridPane();
+        pane.setPadding(new Insets(20));
+        pane.setHgap(10);
+        pane.setVgap(10);
+
+        TextField txfMeldingsId = new TextField();
+        TextField txfMeldingsType = new TextField();
+        TextField txfStartDato = new TextField();
+        TextField txfSlutDato = new TextField();
+        TextArea txaNoter = new TextArea();
+        TextField txfMedarbejder = new TextField();
+
+        pane.add(new Label("Meldings Id:"), 1, 0);
+        pane.add(txfMeldingsId, 2, 0);
+
+        pane.add(new Label("MeldingsType:"), 1, 1);
+        pane.add(txfMeldingsType, 2, 1);
+
+
+
+
+
+    }
+
+    /*
+    =============================================
+    |               HjælpeMetoder               |
+    =============================================
+     */
+
+    private void showTimelineWindow(Medarbejder medarbejder) {
+        Stage stage = new Stage();
+        stage.setTitle("Timeline - " + medarbejder.getNavn());
+
+        timelineGrid = new GridPane();
+        timelineGrid.setHgap(2);
+        timelineGrid.setVgap(2);
+
+        scrollPane = new ScrollPane(timelineGrid);
+        scrollPane.setPrefWidth(850);
+        scrollPane.setPrefHeight(500);
+
+        buildTimeline(medarbejder);
+
+        Scene scene = new Scene(scrollPane);
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    private int getNextMedId() {
+        return tvwMedarbejdere.getItems().stream()
+                .mapToInt(Medarbejder::getMedId)
+                .max()
+                .orElse(0) + 1;
+    }
+
+    private void deleteMedarbejderAction(Medarbejder medarbejder) throws SQLException {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Advarsel sletning af valgt Medarbejder");
+        alert.setHeaderText("Er du sikker på du vil slette valgt Medarbejder?");
+        alert.setContentText("Hvis du trykker 'Ok' sletter du alt ved valgte Medarbejder");
+
+        Optional<ButtonType> resultat = alert.showAndWait();
+
+        if (resultat.isPresent() && resultat.get() == ButtonType.OK) {
+            controller.deleteMedarbejder(medarbejder.getMedId());
+            System.out.println("Slettet medarbejder");
+        }
     }
 
     private void showAlert(String besked) {

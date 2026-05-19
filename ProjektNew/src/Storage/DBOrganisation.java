@@ -1,5 +1,6 @@
 package Storage;
 
+import Model.Afdeling;
 import Model.Medarbejder;
 import Model.Organisation;
 
@@ -79,6 +80,33 @@ public class DBOrganisation extends Storage<Organisation> {
                 }
             }
 
+        } catch (SQLException e) {
+            handleSQLException(e);
+        } catch (Exception e) {
+            System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return organisation;
+    }
+
+    public Organisation readByName(String navn) throws SQLException {
+        String query = "SELECT orgId, navn FROM Organisation WHERE navn = ?";
+
+        Organisation organisation = null;
+
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
+
+            pstmt.setString(1, navn);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    organisation = helperMethod(rs);
+                } else {
+                    System.out.println("Ingen organisation fundet med navn: " + navn);
+                }
+            }
         } catch (SQLException e) {
             handleSQLException(e);
         } catch (Exception e) {

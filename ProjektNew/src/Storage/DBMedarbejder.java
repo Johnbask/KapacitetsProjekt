@@ -6,10 +6,8 @@ import Model.Medarbejder;
 import Model.Organisation;
 import Model.Team;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
+import java.time.chrono.IsoChronology;
 import java.util.ArrayList;
 
 public class DBMedarbejder extends Storage<Medarbejder> {
@@ -116,6 +114,40 @@ public class DBMedarbejder extends Storage<Medarbejder> {
         return m;
     }
 
+    public Medarbejder readByName(String navn) throws SQLException {
+        String query = "SELECT m.medId, m.initialer, m.navn, m.medarbejderType, m.stilling, m.fratrådt, " +
+                "m.afdId, a.navn AS afdNavn, a.leder, " +
+                "m.orgId, o.navn AS orgNavn, " +
+                "m.teamId, t.navn AS teamNavn " +
+                "FROM Medarbejder m " +
+                "LEFT JOIN Afdeling a ON m.afdId = a.afdId " +
+                "LEFT JOIN Organisation o ON m.orgId = o.orgId " +
+                "LEFT JOIN Team t ON m.teamId = t.teamId " +
+                "WHERE m.navn = ?";
+
+        Medarbejder medarbejder = null;
+
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
+
+            pstmt.setString(1, navn);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    medarbejder = helperMethod(rs);
+                } else {
+                    System.out.println("Ingen medarbejder fundet med navn: " + navn);
+                }
+            }
+        } catch (SQLException e) {
+            handleSQLException(e);
+        } catch (Exception e) {
+            System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return medarbejder;
+    }
+
     @Override
     public void update(Medarbejder medarbejder) throws SQLException {
         String query = "UPDATE Medarbejder " +
@@ -176,6 +208,25 @@ public class DBMedarbejder extends Storage<Medarbejder> {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public void removeFromTeam(int medId) throws SQLException {
+        String query = "UPDATE Medarbejder SET teamId = NULL WHERE medId = ?";
+
+        try (Connection minConnection = getConnection();
+        PreparedStatement pstmt = minConnection.prepareStatement(query)){
+            pstmt.setInt(1, medId);
+
+            int rows = pstmt.executeUpdate();
+
+            if (rows > 0) {
+                System.out.println("Medarbejder fjernet fra team.");
+            } else {
+                System.out.println("Ingen medarbejder fundet med id: " + medId);
+            }
+        } catch (SQLException e) {
+            handleSQLException(e);
+        }
     }
 
     @Override

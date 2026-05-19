@@ -112,6 +112,33 @@ public class DBTeam extends Storage<Team> {
         return team;
     }
 
+    public Team readByName(String navn) throws SQLException {
+        String query = "SELECT teamId, navn FROM Team WHERE navn = ?";
+
+        Team team = null;
+
+        try (Connection minConnection = getConnection();
+        PreparedStatement pstmt = minConnection.prepareStatement(query)) {
+
+            pstmt.setString(1, navn);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    team = helperMethod(rs);
+                } else {
+                    System.out.println("Ingen team fundet med navn: " + navn);
+                }
+            }
+        } catch (SQLException e) {
+            handleSQLException(e);
+        } catch (Exception e) {
+            System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return team;
+    }
+
     @Override
     public void update(Team team) throws SQLException {
         String query = "UPDATE Team SET navn = ? WHERE teamId = ?";

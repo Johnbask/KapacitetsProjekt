@@ -90,6 +90,56 @@ public class DBAfdeling extends Storage<Afdeling> {
         return afdeling;
     }
 
+    public Afdeling readByName(String navn) throws SQLException {
+        String query = "SELECT afdId, navn, leder FROM Afdeling WHERE navn = ?";
+
+        Afdeling afdeling = null;
+
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
+
+            pstmt.setString(1, navn);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    afdeling = helperMethod(rs);
+                } else {
+                    System.out.println("Ingen afdeling fundet med navn: " + navn);
+                }
+            }
+        } catch (SQLException e) {
+            handleSQLException(e);
+        } catch (Exception e) {
+            System.out.println("Uventet fejl: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return afdeling;
+    }
+
+    public Afdeling readByLeder(String leder) throws SQLException {
+        String query ="SELECT afdId, navn, leder FROM Afdeling WHERE leder = ?";
+
+        Afdeling afdeling = null;
+
+        try (Connection minConnection = getConnection();
+             PreparedStatement pstmt = minConnection.prepareStatement(query)) {
+
+            pstmt.setString(1, leder);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    afdeling = helperMethod(rs);
+                } else {
+                    System.out.println("Ingen afdeling fundet med leder: " + leder);
+                }
+            }
+        } catch (SQLException e) {
+            handleSQLException(e);
+        }
+        return afdeling;
+    }
+
     @Override
     public void update(Afdeling afdeling) throws SQLException {
         String query = "UPDATE Afdeling SET navn = ?, leder = ? WHERE afdId = ?";
@@ -158,9 +208,12 @@ public class DBAfdeling extends Storage<Afdeling> {
     }
 
     private Afdeling helperMethod(ResultSet rs) throws SQLException {
+        String navn = rs.getString("navn");
+        if (rs.wasNull()) navn = null;
+
         return new Afdeling(
                 rs.getInt("afdId"),
-                rs.getString("navn"),
+                navn,
                 rs.getString("leder")
         );
     }

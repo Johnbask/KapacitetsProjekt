@@ -2,6 +2,7 @@ package Storage;
 
 import Model.Allokering;
 import Model.Medarbejder;
+import Model.Projekt;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -45,7 +46,9 @@ public class DBAllokering extends Storage<Allokering> {
     @Override
     public ArrayList<Allokering> readAll() throws SQLException {
         String query = "SELECT " +
-                "a.allokeringsId, a.periode, a.andel, m.medId, p.projektId, rb.behovId " +
+                "a.allokeringsId, a.periode, a.andel, m.medId, " +
+                "p.projektId, p.navn AS ProjektNavn, " +
+                "rb.behovId " +
                 "FROM Allokering a " +
                 "LEFT JOIN Medarbejder m ON a.medId = m.medId " +
                 "LEFT JOIN Projekt p ON a.projektId = p.projektId " +
@@ -73,8 +76,15 @@ public class DBAllokering extends Storage<Allokering> {
 
     @Override
     public Allokering readById(int id) throws SQLException {
-        String query = "SELECT allokeringsId, periode, andel, medId, projektId, behovId " +
-                "FROM Allokering WHERE allokeringsId = ?";
+        String query = "SELECT " +
+                "a.allokeringsId, a.periode, a.andel, m.medId, " +
+                "p.projektId, p.navn AS ProjektNavn, " +
+                "rb.behovId " +
+                "FROM Allokering a " +
+                "LEFT JOIN Medarbejder m ON a.medId = m.medId " +
+                "LEFT JOIN Projekt p ON a.projektId = p.projektId " +
+                "LEFT JOIN RessourceBehov rb ON a.behovId = rb.behovId " +
+                "WHERE allokeringsId = ?";
 
         Allokering allokering = null;
 
@@ -183,8 +193,13 @@ public class DBAllokering extends Storage<Allokering> {
                 rs.getInt("medId"),
                 null, null, null, null, false, null, null, null
         );
-
         allokering.addMedarbejder(medarbejder);
+
+        int projektId = rs.getInt("projektId");
+        String projektNavn = rs.getString("projektNavn");
+        if (!rs.wasNull() && projektNavn != null) {
+            allokering.setProjekt(new Projekt(projektId, projektNavn));
+        }
 
         return allokering;
     }

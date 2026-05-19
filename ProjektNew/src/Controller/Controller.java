@@ -58,6 +58,10 @@ public class Controller {
         return dbAfdeling.readById(afdId);
     }
 
+    public Afdeling getAfdelingByName(String navn) throws SQLException {
+        return dbAfdeling.readByName(navn);
+    }
+
     public void updateAfdeling(int afdId, String nytNavn, String nyLeder) throws SQLException {
         Afdeling afdeling = new Afdeling(afdId, nytNavn, nyLeder);
         dbAfdeling.update(afdeling);
@@ -85,6 +89,10 @@ public class Controller {
 
     public Organisation getOrganisationById(int orgId) throws SQLException {
         return dbOrganisation.readById(orgId);
+    }
+
+    public Organisation getOrganisationByName(String navn) throws SQLException{
+        return dbOrganisation.readByName(navn);
     }
 
     public void updateOrganisation(int orgId, String nyNavn) throws SQLException {
@@ -116,6 +124,10 @@ public class Controller {
         return dbTeam.readById(teamId);
     }
 
+    public Team getTeamByName(String navn) throws SQLException {
+        return dbTeam.readByName(navn);
+    }
+
     public Team updateTeam(int teamId, String nyNavn) throws SQLException {
         Team team = new Team(teamId, nyNavn);
         dbTeam.update(team);
@@ -133,10 +145,10 @@ public class Controller {
     */
 
     public Medarbejder createMedarbejder(int medId, String initialer, String navn, MedarbejderType type,
-                                  String stilling, boolean fratrådt, int afdId, int orgId, int teamId) throws SQLException {
-        Afdeling afdeling = dbAfdeling.readById(afdId);
-        Organisation organisation = dbOrganisation.readById(orgId);
-        Team team = dbTeam.readById(teamId);
+                                  String stilling, boolean fratrådt, String afdNavn, String orgNavn, String teamNavn) throws SQLException {
+        Afdeling afdeling = dbAfdeling.readByName(afdNavn);
+        Organisation organisation = dbOrganisation.readByName(orgNavn);
+        Team team = dbTeam.readByName(teamNavn);
 
         if (afdeling == null || organisation == null || team == null) {
             System.out.println("Fejl: Afdeling, Organisation eller Team blev ikke fundet - Medarbejder ikke oprettet." );
@@ -156,24 +168,43 @@ public class Controller {
         return dbMedarbejder.readById(medId);
     }
 
-    public Medarbejder updateMedarbejder(int medId, String nyInitialer, String nynNavn,
+    public Medarbejder updateMedarbejder(int medId, String nyInitialer, String nytNavn,
                                          MedarbejderType type, String nyStilling, boolean fratrådt,
-                                         int afdId, int orgId, int teamId) throws  SQLException {
-        Afdeling afdeling = dbAfdeling.readById(afdId);
-        Organisation organisation = dbOrganisation.readById(orgId);
-        Team team = dbTeam.readById(teamId);
+                                         String afdNavn, String orgNavn, String teamNavn) throws  SQLException {
+        Afdeling afdeling = null;
+        if (afdNavn != null && !afdNavn.isEmpty()) {
+            afdeling = dbAfdeling.readByName(afdNavn);
+            if (afdeling == null) {
+                afdeling = dbAfdeling.readByLeder(afdNavn);
+            }
+        }
+
+        Organisation organisation = null;
+        if (orgNavn != null && !orgNavn.isEmpty()) {
+            organisation = dbOrganisation.readByName(orgNavn);
+        }
+
+        Team team = null;
+        if (teamNavn != null && !teamNavn.isEmpty()) {
+            team = dbTeam.readByName(teamNavn);
+        }
 
         if (afdeling == null || organisation == null || team == null) {
             System.out.println("Fejl: Afdeling, Organisation eller Team blev ikke fundet - Medarbejder ikke opdateret");
+            return null;
         }
 
-        Medarbejder medarbejder = new Medarbejder(medId, nyInitialer, nynNavn, type, nyStilling, fratrådt, afdeling, organisation, team);
+        Medarbejder medarbejder = new Medarbejder(medId, nyInitialer, nytNavn, type, nyStilling, fratrådt, afdeling, organisation, team);
         dbMedarbejder.update(medarbejder);
         return medarbejder;
     }
 
     public Medarbejder deleteMedarbejder(int medId) throws SQLException {
         return dbMedarbejder.delete(medId);
+    }
+
+    public void fjernMedarbejderFraTeam(int medId) throws SQLException {
+        dbMedarbejder.removeFromTeam(medId);
     }
 
     /*
@@ -374,8 +405,8 @@ public class Controller {
     =====================
     */
 
-    public Melding createMelding(int meldingsId, MeldingType type, LocalDate startDato, LocalDate slutDato, String noter, int medId) throws SQLException {
-        Medarbejder medarbejder = dbMedarbejder.readById(medId);
+    public Melding createMelding(int meldingsId, MeldingType type, LocalDate startDato, LocalDate slutDato, String noter, String medarbejderNavn) throws SQLException {
+        Medarbejder medarbejder = dbMedarbejder.readByName(medarbejderNavn);
 
         if (medarbejder == null) {
             System.out.println("Fejl: Medarbejder ikke fundet - melding ikke oprettet.");
@@ -467,8 +498,8 @@ public class Controller {
         return false;
     }
 
-    public void updateMelding(int meldingsId, MeldingType type, LocalDate startDato, LocalDate slutDato, String noter, int medId) throws SQLException {
-        Medarbejder medarbejder = dbMedarbejder.readById(medId);
+    public Melding updateMelding(int meldingsId, MeldingType type, LocalDate startDato, LocalDate slutDato, String noter, String medarbejderNavn) throws SQLException {
+        Medarbejder medarbejder = dbMedarbejder.readByName(medarbejderNavn);
 
         if (medarbejder == null) {
             System.out.println("Fejl: Medarbejder ikke fundet - melding ikke opdateret.");
@@ -480,6 +511,7 @@ public class Controller {
 
         Melding melding = new Melding(meldingsId, type, startDato, slutDato, noter, medarbejder);
         dbMelding.update(melding);
+        return melding;
     }
 
     public void deleteMelding(int meldingsId) throws SQLException {
