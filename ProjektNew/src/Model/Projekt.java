@@ -65,13 +65,20 @@ public class Projekt {
     }
     public void deleteFase(Fase f) { faser.remove(f); }
 
-    public void addRessourceBehov(RessourceBehov r) {
-        if (!ressourceBehov.contains(r)) ressourceBehov.add(r);
+    public void addRessourceBehov(RessourceBehov rb) {
+        if (rb == null) return;
+
+        if (!ressourceBehov.contains(rb)) {
+            ressourceBehov.add(rb);
+        }
     }
+
     public void deleteRessourceBehov(RessourceBehov r) { ressourceBehov.remove(r); }
 
     public void addAllokering(Allokering a) { if (!allokeringer.contains(a)) allokeringer.add(a); }
     public void deleteAllokering(Allokering a) { allokeringer.remove(a); }
+
+
 
     @Override
     public String toString() {

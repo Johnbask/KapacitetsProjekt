@@ -57,6 +57,15 @@ public class MedarbejderOversigt extends GridPane {
        tvwMedarbejdere = new TableView<>();
        tvwMedarbejdere.setPrefSize(944.8, 400);
 
+       // resizer inhold til at passe med vindue størrelse
+        tvwMedarbejdere.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                tvwMedarbejdere.prefWidthProperty().bind(newScene.widthProperty());
+                tvwMedarbejdere.prefHeightProperty().bind(newScene.heightProperty().subtract(80));
+            }
+        });
+
+
        TableColumn<Medarbejder, Integer> colMedId = new TableColumn<>("Medarbejder ID");
        colMedId.setCellValueFactory(
                new PropertyValueFactory<>("medId")
