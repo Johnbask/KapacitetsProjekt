@@ -11,6 +11,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
 import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.List;
 
 public class HovdeVindue extends Application {
@@ -26,19 +27,7 @@ public class HovdeVindue extends Application {
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 
         // =====================================================
-        // PROJEKT OVERSIGT
-        // =====================================================
-        ProjektOversigt projektPane = new ProjektOversigt();
-        Tab tabProjekt = new Tab("Projekt oversigt", projektPane);
-
-        // =====================================================
-        // TEAM OVERSIGT
-        // =====================================================
-        TeamOversigt teamPane = new TeamOversigt();
-        Tab tabTeams = new Tab("Team oversigt", teamPane);
-
-        // =====================================================
-        // MEDARBEJDERE
+        // MEDARBEJDERE (testdata)
         // =====================================================
         Medarbejder m1 = new Medarbejder(1, "JH", "Jonas Hansen",
                 MedarbejderType.INTERN, "Developer", false, null, null, null);
@@ -50,7 +39,7 @@ public class HovdeVindue extends Application {
                 MedarbejderType.EKSTERN, "Architect", false, null, null, null);
 
         // =====================================================
-        // ALLOKERINGER
+        // ALLOKERINGER (testdata)
         // =====================================================
         Allokering a1 = new Allokering(1, YearMonth.of(2026, 9), 0.8);
         Allokering a2 = new Allokering(2, YearMonth.of(2026, 10), 0.6);
@@ -68,22 +57,18 @@ public class HovdeVindue extends Application {
         a6.addMedarbejder(m3);
         a7.addMedarbejder(m3);
 
-        List<Allokering> allokeringer = List.of(a1, a2, a3, a4, a5, a6, a7);
-
         // =====================================================
-        // PROJEKTER + BEHOV (VIGTIG RETTELSE HER)
+        // PROJEKTER — delt muterbar liste
         // =====================================================
         Projekt p1 = new Projekt(1, "System A");
         Projekt p2 = new Projekt(2, "System B");
 
-        // SYSTEM A (3 måneder)
         p1.addRessourceBehov(new RessourceBehov(
                 1, "Developer",
                 YearMonth.of(2026, 9),
                 YearMonth.of(2026, 11),
                 2, 850, ØkonomiType.CAPEX));
 
-        // SYSTEM B (5 måneder)
         p2.addRessourceBehov(new RessourceBehov(
                 2, "Tester",
                 YearMonth.of(2026, 10),
@@ -96,38 +81,62 @@ public class HovdeVindue extends Application {
                 YearMonth.of(2027, 3),
                 1.5, 900, ØkonomiType.CAPEX));
 
-        projektPane.buildTimeline(List.of(p1, p2));
+        // VIGTIGT: ArrayList så listen kan muteres og deles mellem views
+        List<Projekt> projekter = new ArrayList<>(List.of(p1, p2));
 
         // =====================================================
-        // MEDARBEJDER VIEW
+        // VIEWS
         // =====================================================
-        MedarbejderOversigt medarbejderPane = new MedarbejderOversigt();
-        //medarbejderPane.setMedarbejdere(List.of(m1, m2, m3));
-        //medarbejderPane.setAllokeringer(allokeringer);
-
-        Tab tabMedarbejder = new Tab("Medarbejder oversigt", medarbejderPane);
-
-        // =====================================================
-        // BEHOV VIEW
-        // =====================================================
+        ProjektOversigt projektPane = new ProjektOversigt();
         BehovOversigt behovPane = new BehovOversigt();
-        behovPane.setProjekter(List.of(p1, p2));
-
-        Tab tabBehov = new Tab("Behov oversigt", behovPane);
+        MedarbejderOversigt medarbejderPane = new MedarbejderOversigt();
+        TeamOversigt teamPane = new TeamOversigt();
 
         // =====================================================
-        // ADD TABS
+        // INDLÆS DATA I VIEWS
         // =====================================================
-        tabPane.getTabs().addAll(
-                tabBehov,
-                tabMedarbejder,
-                tabProjekt,
-                tabTeams
+        projektPane.buildTimeline(projekter);
+        behovPane.setProjekter(projekter);
+
+        // =====================================================
+        // CALLBACKS — kobler de to views sammen
+        //
+        // Når et behov oprettes/redigeres/slettes i BehovOversigt:
+        //   → genbyg tidslinjen i ProjektOversigt
+        //
+        // Når et projekt oprettes i ProjektOversigt:
+        //   → opdater projektlisten i BehovOversigt
+        // =====================================================
+        behovPane.setOnBehovChanged(() ->
+                projektPane.buildTimeline(projekter)
         );
+
+        projektPane.setOnProjektOprettet(nytProjekt -> {
+            projekter.add(nytProjekt);
+            projektPane.buildTimeline(projekter);
+            behovPane.setProjekter(projekter);
+        });
+
+        // =====================================================
+        // TABS
+        // =====================================================
+        Tab tabBehov      = new Tab("Behov oversigt",      behovPane);
+        Tab tabMedarbejder = new Tab("Medarbejder oversigt", medarbejderPane);
+        Tab tabProjekt    = new Tab("Projekt oversigt",     projektPane);
+        Tab tabTeams      = new Tab("Team oversigt",        teamPane);
+
+        tabPane.getTabs().addAll(tabBehov, tabMedarbejder, tabProjekt, tabTeams);
 
         pane.setCenter(tabPane);
 
         Scene scene = new Scene(pane, 1200, 650);
+
+        // Dynamisk størrelse — alt indeni følger med automatisk
+        pane.prefWidthProperty().bind(scene.widthProperty());
+        pane.prefHeightProperty().bind(scene.heightProperty());
+        tabPane.prefWidthProperty().bind(scene.widthProperty());
+        tabPane.prefHeightProperty().bind(scene.heightProperty());
+
         stage.setScene(scene);
         stage.show();
     }

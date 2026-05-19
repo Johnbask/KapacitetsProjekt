@@ -52,8 +52,29 @@ public class RessourceBehov {
 
     public void setProjekt(Projekt projekt) { this.projekt = projekt; }
 
+
+    public void setAndel(double andel) {
+        this.andel = andel;
+    }
+
+
+    public void setRolle(String rolle) {
+        this.rolle = rolle;
+    }
+
+    public void setSlutPeriode(YearMonth slutPeriode) {
+        this.slutPeriode = slutPeriode;
+    }
+
+    public void setStartPeriode(YearMonth startPeriode) {
+        this.startPeriode = startPeriode;
+    }
+
+
     @Override
     public String toString() {
         return behovId + ", " + rolle + ", " + startPeriode + ", " + slutPeriode + ", " + andel + ", " + timePris + ", " + økonomiType + "\n";
     }
+
+
 }
