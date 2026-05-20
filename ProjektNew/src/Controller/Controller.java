@@ -7,7 +7,6 @@ import Model.Enum.MeldingType;
 import Model.Enum.ØkonomiType;
 import Storage.*;
 
-
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.YearMonth;

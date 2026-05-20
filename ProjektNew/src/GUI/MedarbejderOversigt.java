@@ -806,7 +806,7 @@ public class MedarbejderOversigt extends GridPane {
             }
 
             try {
-                controller.deleteMedarbejder(valgt.getMeldingsId());
+                controller.deleteMelding(valgt.getMeldingsId());
                 tvwMelding.getItems().remove(valgt);
             } catch (SQLException ex) {
                 showAlert("Fejl ved sletning:\n" + ex.getMessage());

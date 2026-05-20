@@ -223,8 +223,8 @@ public class DBMelding extends Storage<Melding> {
         return new Melding(
                 rs.getInt("meldingsId"),
                 MeldingType.valueOf(rs.getString("typeMelding")),
-                rs.getObject("startDato", LocalDate.class),
-                rs.getObject("slutDato", LocalDate.class),
+                rs.getDate("startDato").toLocalDate(),
+                rs.getDate("slutDato").toLocalDate(),
                 rs.getString("noter"),
                 medarbejder
         );
