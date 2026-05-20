@@ -9,4 +9,5 @@
 /dataSources/
 /dataSources.local.xml
 /out/
+.idea/dataSources/
 ProjektNew/src/config.properties
