@@ -503,10 +503,11 @@ public class Controller {
 
         if (medarbejder == null) {
             System.out.println("Fejl: Medarbejder ikke fundet - melding ikke opdateret.");
+            return null;
         }
 
-        if (slutDato.isAfter(startDato)) {
-            System.out.println("Fejl: slutDato må ikke være efter startDato.");
+        if (startDato.isAfter(slutDato)) {
+            System.out.println("Fejl: startDato må ikke være efter slutDato.");
         }
 
         Melding melding = new Melding(meldingsId, type, startDato, slutDato, noter, medarbejder);

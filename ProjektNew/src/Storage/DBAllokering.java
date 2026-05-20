@@ -143,7 +143,7 @@ public class DBAllokering extends Storage<Allokering> {
     }
 
     @Override
-    public Medarbejder delete(int id) throws SQLException {
+    public Allokering delete(int id) throws SQLException {
         String query = "DELETE FROM Allokering WHERE allokeringsId = ?";
 
         try (Connection minConnection = getConnection();

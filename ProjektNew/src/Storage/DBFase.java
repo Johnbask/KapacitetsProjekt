@@ -131,7 +131,7 @@ public class DBFase extends Storage<Fase> {
     }
 
     @Override
-    public Medarbejder delete(int id) throws SQLException {
+    public Fase delete(int id) throws SQLException {
         String query = "DELETE FROM Fase WHERE faseId = ?";
 
         try (Connection minConnection = getConnection();

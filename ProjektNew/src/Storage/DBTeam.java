@@ -166,7 +166,7 @@ public class DBTeam extends Storage<Team> {
     }
 
     @Override
-    public Medarbejder delete(int id) throws SQLException {
+    public Team delete(int id) throws SQLException {
         String query = "DELETE FROM Team WHERE teamId = ?";
 
         try (Connection minConnection = getConnection();

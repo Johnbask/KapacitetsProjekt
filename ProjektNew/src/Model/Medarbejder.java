@@ -15,6 +15,7 @@ public class Medarbejder {
     private Afdeling afdeling;
     private Organisation organisation;
     private Team team;
+    private ArrayList<Melding> meldinger = new ArrayList<>();
 
     public Medarbejder(int medId, String initialer, String navn, MedarbejderType type, String stilling,
                        boolean fratrådt, Afdeling afdeling, Organisation organisation, Team team) {
@@ -92,11 +93,15 @@ public class Medarbejder {
         this.team = team;
     }
 
-
-
-
-
-
+    public ArrayList<Melding> getMeldinger() {
+        return meldinger;
+    }
+    public void addMelding(Melding melding) {
+        meldinger.add(melding);
+    }
+    public void removeMelding(Melding melding) {
+        meldinger.remove(melding);
+    }
 
     // TODO: SØGNING INTERN x EKSTERN
 

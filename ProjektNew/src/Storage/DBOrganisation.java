@@ -144,7 +144,7 @@ public class DBOrganisation extends Storage<Organisation> {
     }
 
     @Override
-    public Medarbejder delete(int id) throws SQLException {
+    public Organisation delete(int id) throws SQLException {
         String query = "DELETE FROM Organisation WHERE orgId = ?";
 
         try (Connection minConnection = getConnection();

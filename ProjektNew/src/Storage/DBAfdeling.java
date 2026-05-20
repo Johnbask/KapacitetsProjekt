@@ -168,7 +168,7 @@ public class DBAfdeling extends Storage<Afdeling> {
     }
 
     @Override
-    public Medarbejder delete(int id) throws SQLException {
+    public Afdeling delete(int id) throws SQLException {
         String query = "DELETE FROM Afdeling WHERE afdId = ?";
 
         try (Connection minConnection = getConnection();

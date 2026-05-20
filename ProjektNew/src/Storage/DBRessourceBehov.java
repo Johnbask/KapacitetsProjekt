@@ -105,7 +105,7 @@ public class DBRessourceBehov extends Storage<RessourceBehov> {
     }
 
     @Override
-    public Medarbejder delete(int id) throws SQLException {
+    public RessourceBehov delete(int id) throws SQLException {
 
         String query = "DELETE FROM RessourceBehov WHERE behovId = ?";
 

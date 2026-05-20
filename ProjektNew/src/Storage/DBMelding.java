@@ -4,8 +4,10 @@ import Model.Enum.MedarbejderType;
 import Model.Enum.MeldingType;
 import Model.Medarbejder;
 import Model.Melding;
+import net.bytebuddy.asm.Advice;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 
 public class DBMelding extends Storage<Melding> {
@@ -139,7 +141,8 @@ public class DBMelding extends Storage<Melding> {
 
     @Override
     public void update(Melding melding) throws SQLException {
-        String query = "UPDATE Melding SET typeMelding = ?, startDato = ?, slutDato = ?, noter = ?, medId = ?";
+        String query = "UPDATE Melding SET typeMelding = ?, startDato = ?, slutDato = ?, noter = ?, medId = ? " +
+                "WHERE meldingsId = ?";
 
         try (Connection minConnection = getConnection();
              PreparedStatement pstmt = minConnection.prepareStatement(query)) {
@@ -167,7 +170,7 @@ public class DBMelding extends Storage<Melding> {
     }
 
     @Override
-    public Medarbejder delete(int id) throws SQLException {
+    public Melding delete(int id) throws SQLException {
         String query = "DELETE FROM Melding WHERE meldingsId = ?";
 
         try (Connection minConnection = getConnection();
@@ -220,8 +223,8 @@ public class DBMelding extends Storage<Melding> {
         return new Melding(
                 rs.getInt("meldingsId"),
                 MeldingType.valueOf(rs.getString("typeMelding")),
-                rs.getDate("startDato").toLocalDate(),
-                rs.getDate("slutDato").toLocalDate(),
+                rs.getObject("startDato", LocalDate.class),
+                rs.getObject("slutDato", LocalDate.class),
                 rs.getString("noter"),
                 medarbejder
         );

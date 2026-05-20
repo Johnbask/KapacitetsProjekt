@@ -113,7 +113,7 @@ public class DBProjekt extends Storage<Projekt> {
     }
 
     @Override
-    public Medarbejder delete(int id) throws SQLException {
+    public Projekt delete(int id) throws SQLException {
         String query = "DELETE FROM Projekt WHERE projektId = ?";
 
         try (Connection minConnection = getConnection();
