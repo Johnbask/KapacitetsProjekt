@@ -18,6 +18,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -262,9 +263,9 @@ public class TeamOversigt extends BorderPane {
     }
 
     /*
-    =================================
-    |       CREATE MEDARBEJDER      |
-    =================================
+    ==========================================
+    |       TILFØJ MEDARBEJDER TIL TEAM      |
+    ==========================================
      */
     private void openTilføjMedarbejderWindow(Team team) {
 
@@ -276,137 +277,76 @@ public class TeamOversigt extends BorderPane {
         pane.setHgap(10);
         pane.setVgap(10);
 
-        TextField txfMedId = new TextField();
-        TextField txfNavn = new TextField();
-        TextField txfInitialer = new TextField();
-        TextField txfStilling = new TextField();
+       TextField txfSøg = new TextField();
+       txfSøg.setPromptText("Skriv et navn eller initialer...");
 
-        // Dropdowns
-        ComboBox<MedarbejderType> cmbType = new ComboBox<>();
-        ComboBox<Afdeling> cmbAfdeling = new ComboBox<>();
-        ComboBox<Organisation> cmbOrganisation = new ComboBox<>();
-        CheckBox chkFratrådt = new CheckBox("Fratrådt");
+       ListView<Medarbejder> lvwResultater = new ListView<>();
+       lvwResultater.setPrefHeight(150);
+       lvwResultater.setCellFactory(lv -> new ListCell<>() {
+           @Override
+           protected void updateItem(Medarbejder m, boolean empty) {
+               super.updateItem(m, empty);
+               setText(empty || m == null ? null : m.getNavn() + " (" + m.getInitialer() + ")");
+           }
+       });
 
-        cmbType.getItems().addAll(MedarbejderType.values());
-        cmbType.getSelectionModel().selectFirst();
+       Button btnSøg = new Button("Søg");
+       Button btnGem = new Button("Gem");
+       Button btnLuk = new Button("Luk");
 
-        try {
-            cmbAfdeling.getItems().addAll(controller.getAlleAfdelinger());
-            cmbOrganisation.getItems().addAll(controller.getAlleOrganisationer());
-        } catch (SQLException e) {
-            showAlert("Fejl ved hentning af afdelinger/organisationer:\n" + e.getMessage());
-        }
+       pane.add(new Label("Søg medarbejder:"), 0, 0);
+       pane.add(txfSøg, 1, 0);
+       pane.add(btnSøg, 2, 0);
+       pane.add(lvwResultater, 0, 1, 3, 1);
+       pane.add(new HBox(10, btnGem, btnLuk), 1, 2);
 
-        cmbAfdeling.setCellFactory(lv -> new ListCell<>() {
-            @Override
-            protected void updateItem(Afdeling a, boolean empty) {
-                super.updateItem(a, empty);
-                if (empty || a == null) setText(null);
-                else setText(a.getNavn() == null || a.getNavn().isEmpty() ? a.getLeder() : a.getNavn());
-            }
-        });
+       btnSøg.setOnAction(e -> {
+           String søgeord = txfSøg.getText().trim();
+           if (søgeord.isEmpty()) {
+               showAlert("Skriv et navn at søge på.");
+               return;
+           }
+           try {
+               ArrayList<Medarbejder> resultater = controller.søgMedarbejderNavn(søgeord);
+               lvwResultater.getItems().setAll(resultater);
+               if (resultater.isEmpty()) {
+                   showAlert("Ingen medarbejder fundet med navn: " + søgeord);
+               }
+           } catch (SQLException ex) {
+               showAlert("Fejl ved søgning:\n" + ex.getMessage());
+           }
+       });
 
-        cmbAfdeling.setButtonCell(new ListCell<>() {
-            @Override
-            protected void updateItem(Afdeling a, boolean empty) {
-                super.updateItem(a, empty);
-                if (empty || a == null) setText(null);
-                else setText(a.getNavn() == null || a.getNavn().isEmpty() ? a.getLeder() : a.getNavn());
-            }
-        });
+       btnGem.setOnAction(e -> {
+           Medarbejder valgt = lvwResultater.getSelectionModel().getSelectedItem();
+           if (valgt == null) {
+               showAlert("Vælg en medarbejder fra listen først.");
+               return;
+           }
+           try {
+               controller.updateMedarbejder(
+                       valgt.getMedId(),
+                       valgt.getInitialer(),
+                       valgt.getNavn(),
+                       valgt.getType(),
+                       valgt.getStilling(),
+                       valgt.isFratrådt(),
+                       valgt.getAfdeling() != null ? valgt.getAfdeling().getNavn() : "",
+                       valgt.getOrganisation() != null ? valgt.getOrganisation().getNavn() : "",
+                       team.getNavn()
+               );
+               team.addMedarbejder(valgt);
+               tvwTeams.refresh();
+               stage.close();
+           } catch (SQLException ex) {
+               showAlert("Fejl ved opdatering:\n" + ex.getMessage());
+           }
 
-        cmbOrganisation.setCellFactory(lv -> new ListCell<>() {
-            @Override
-            protected void updateItem(Organisation o, boolean empty) {
-                super.updateItem(o, empty);
-                setText(empty || o == null ? null : o.getNavn());
-            }
-        });
 
-        cmbOrganisation.setButtonCell(new ListCell<>() {
-            @Override
-            protected void updateItem(Organisation o, boolean empty) {
-                super.updateItem(o, empty);
-                setText(empty || o == null ? null : o.getNavn());
-            }
-        });
+       });
+       btnLuk.setOnAction(e -> stage.close());
 
-        // --- Layout ---
-        pane.add(new Label("Med ID:"),       0, 0); pane.add(txfMedId, 1, 0);
-        pane.add(new Label("Navn:"),         0, 1); pane.add(txfNavn, 1, 1);
-        pane.add(new Label("Initialer:"),    0, 2); pane.add(txfInitialer, 1, 2);
-        pane.add(new Label("Stilling:"),     0, 3); pane.add(txfStilling, 1, 3);
-        pane.add(new Label("Type:"),         0, 4); pane.add(cmbType, 1, 4);
-        pane.add(new Label("Afdeling:"),     0, 5); pane.add(cmbAfdeling, 1, 5);
-        pane.add(new Label("Organisation:"), 0, 6); pane.add(cmbOrganisation, 1, 6);
-
-        Button btnGem = new Button("Gem");
-        Button btnLuk = new Button("Luk");
-        pane.add(new HBox(10, btnGem, btnLuk), 1, 8);
-
-        btnGem.setOnAction(e -> {
-            String navn = txfNavn.getText().trim();
-            String initialer = txfInitialer.getText().trim();
-            String stilling = txfStilling.getText().trim();
-            String medIdTekst = txfMedId.getText().trim();
-
-            if (navn.isEmpty() || initialer.isEmpty() || stilling.isEmpty() || medIdTekst.isEmpty()) {
-                showAlert("Alle felter skal udfyldes");
-                return;
-            }
-
-            if (cmbAfdeling.getValue() == null) {
-                showAlert("Vælg en afdeling.");
-                return;
-            }
-
-            if (cmbOrganisation.getValue() == null) {
-                showAlert("Vælg en organisation.");
-                return;
-            }
-
-            int medId;
-
-            try {
-                medId = Integer.parseInt(medIdTekst);
-            } catch (NumberFormatException ex) {
-                showAlert("Med ID skal være et heltal.");
-                return;
-            }
-
-            Afdeling valgtAfdeling = cmbAfdeling.getValue();
-            String afdelingIdentifier = (valgtAfdeling.getNavn() == null || valgtAfdeling.getNavn().isEmpty())
-                    ? valgtAfdeling.getLeder()
-                    : valgtAfdeling.getNavn();
-
-            try {
-                Medarbejder ny = controller.updateMedarbejder(
-                        medId,
-                        initialer,
-                        navn,
-                        cmbType.getValue(),
-                        stilling,
-                        chkFratrådt.isSelected(),
-                        afdelingIdentifier,
-                        cmbOrganisation.getValue().getNavn(),
-                        team.getNavn()
-                );
-
-                if (ny != null) {
-                    team.addMedarbejder(ny);
-                    tvwTeams.refresh();
-                    stage.close();
-                } else {
-                    showAlert("Medarbejder kunne ikke opdateres - tjek om Med ID allerede findes.");
-                }
-            } catch (SQLException ex) {
-                showAlert("Fejl ved opdatering:\n" + ex.getMessage());
-            }
-        });
-
-        btnLuk.setOnAction(e -> stage.close());
-
-        stage.setScene(new Scene(pane, 380, 370));
+        stage.setScene(new Scene(pane, 400, 300));
         stage.showAndWait();
     }
 

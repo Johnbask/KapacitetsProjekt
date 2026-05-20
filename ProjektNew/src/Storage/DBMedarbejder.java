@@ -26,9 +26,24 @@ public class DBMedarbejder extends Storage<Medarbejder> {
             pstmt.setString(4, m.getType().name());
             pstmt.setString(5, m.getStilling());
             pstmt.setBoolean(6, m.isFratrådt());
-            pstmt.setInt(7, m.getAfdeling().getAfdId());
-            pstmt.setInt(8, m.getOrganisation().getOrgId());
-            pstmt.setInt(9, m.getTeam().getTeamId());
+
+            if (m.getAfdeling() != null) {
+                pstmt.setInt(7, m.getAfdeling().getAfdId());
+            } else {
+                pstmt.setNull(7, Types.INTEGER);
+            }
+
+            if (m.getOrganisation() != null) {
+                pstmt.setInt(8, m.getOrganisation().getOrgId());
+            } else {
+                pstmt.setNull(8, Types.INTEGER);
+            }
+
+            if (m.getTeam() != null) {
+                pstmt.setInt(9, m.getTeam().getTeamId());
+            } else {
+                pstmt.setNull(9, Types.INTEGER);
+            }
 
             int rows = pstmt.executeUpdate();
 
@@ -149,7 +164,7 @@ public class DBMedarbejder extends Storage<Medarbejder> {
     }
 
     @Override
-    public void update(Medarbejder medarbejder) throws SQLException {
+    public void update(Medarbejder m) throws SQLException {
         String query = "UPDATE Medarbejder " +
                 "SET initialer = ?, navn = ?, medarbejderType = ?, stilling = ?, fratrådt = ?, " +
                 "afdId = ?, orgId = ?, teamId = ? " +
@@ -158,15 +173,29 @@ public class DBMedarbejder extends Storage<Medarbejder> {
         try (Connection minConnection = getConnection();
              PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
-            pstmt.setString(1, medarbejder.getInitialer());
-            pstmt.setString(2, medarbejder.getNavn());
-            pstmt.setString(3, medarbejder.getType().name());
-            pstmt.setString(4, medarbejder.getStilling());
-            pstmt.setBoolean(5, medarbejder.isFratrådt());
-            pstmt.setInt(6, medarbejder.getAfdeling().getAfdId());
-            pstmt.setInt(7, medarbejder.getOrganisation().getOrgId());
-            pstmt.setInt(8, medarbejder.getTeam().getTeamId());
-            pstmt.setInt(9, medarbejder.getMedId());
+            pstmt.setString(1, m.getInitialer());
+            pstmt.setString(2, m.getNavn());
+            pstmt.setString(3, m.getType().name());
+            pstmt.setString(4, m.getStilling());
+            pstmt.setBoolean(5, m.isFratrådt());
+            if (m.getAfdeling() != null) {
+                pstmt.setInt(7, m.getAfdeling().getAfdId());
+            } else {
+                pstmt.setNull(7, Types.INTEGER);
+            }
+
+            if (m.getOrganisation() != null) {
+                pstmt.setInt(8, m.getOrganisation().getOrgId());
+            } else {
+                pstmt.setNull(8, Types.INTEGER);
+            }
+
+            if (m.getTeam() != null) {
+                pstmt.setInt(9, m.getTeam().getTeamId());
+            } else {
+                pstmt.setNull(9, Types.INTEGER);
+            }
+            pstmt.setInt(9, m.getMedId());
 
             int rows = pstmt.executeUpdate();
 

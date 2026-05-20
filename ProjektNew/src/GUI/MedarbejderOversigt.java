@@ -186,7 +186,7 @@ public class MedarbejderOversigt extends GridPane {
             if (valgtMedarbejder != null) {
                 showTimelineWindow(valgtMedarbejder);
             } else {
-                showAlert("Vælg et team først.");
+                showAlert("Vælg et medarbejder først.");
             }
         });
 
@@ -449,12 +449,9 @@ public class MedarbejderOversigt extends GridPane {
                             txfTeamNavn.getText()
                     );
 
-                    if (ny != null) {
-                        tvwMedarbejdere.getItems().add(ny);
-                        stage.close();
-                    } else {
-                        showAlert("Afdeling, Organisation eller Team blev ikke fundet");
-                    }
+                    tvwMedarbejdere.getItems().add(ny);
+                    stage.close();
+
                 } catch (SQLException ex) {
                     showAlert("Fejl ved oprettelse af medarbejder: " + ex.getMessage());
                 } catch (NumberFormatException ex) {
@@ -817,31 +814,6 @@ public class MedarbejderOversigt extends GridPane {
 
         stage.setScene(new Scene(root, 950, 600));
         stage.showAndWait();
-    }
-
-    private void opretMelding() {
-        GridPane pane = new GridPane();
-        pane.setPadding(new Insets(20));
-        pane.setHgap(10);
-        pane.setVgap(10);
-
-        TextField txfMeldingsId = new TextField();
-        TextField txfMeldingsType = new TextField();
-        TextField txfStartDato = new TextField();
-        TextField txfSlutDato = new TextField();
-        TextArea txaNoter = new TextArea();
-        TextField txfMedarbejder = new TextField();
-
-        pane.add(new Label("Meldings Id:"), 1, 0);
-        pane.add(txfMeldingsId, 2, 0);
-
-        pane.add(new Label("MeldingsType:"), 1, 1);
-        pane.add(txfMeldingsType, 2, 1);
-
-
-
-
-
     }
 
     /*

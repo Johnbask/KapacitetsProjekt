@@ -149,11 +149,6 @@ public class Controller {
         Organisation organisation = dbOrganisation.readByName(orgNavn);
         Team team = dbTeam.readByName(teamNavn);
 
-        if (afdeling == null || organisation == null || team == null) {
-            System.out.println("Fejl: Afdeling, Organisation eller Team blev ikke fundet - Medarbejder ikke oprettet." );
-            return null;
-        }
-
         Medarbejder medarbejder = new Medarbejder(medId, initialer, navn, type, stilling, fratrådt, afdeling, organisation, team);
         dbMedarbejder.insert(medarbejder);
         return medarbejder;
@@ -178,20 +173,8 @@ public class Controller {
             }
         }
 
-        Organisation organisation = null;
-        if (orgNavn != null && !orgNavn.isEmpty()) {
-            organisation = dbOrganisation.readByName(orgNavn);
-        }
-
-        Team team = null;
-        if (teamNavn != null && !teamNavn.isEmpty()) {
-            team = dbTeam.readByName(teamNavn);
-        }
-
-        if (afdeling == null || organisation == null || team == null) {
-            System.out.println("Fejl: Afdeling, Organisation eller Team blev ikke fundet - Medarbejder ikke opdateret");
-            return null;
-        }
+        Organisation organisation = (orgNavn != null && !orgNavn.isEmpty()) ? dbOrganisation.readByName(orgNavn) : null;
+        Team team = (teamNavn != null && !teamNavn.isEmpty()) ? dbTeam.readByName(teamNavn) : null;
 
         Medarbejder medarbejder = new Medarbejder(medId, nyInitialer, nytNavn, type, nyStilling, fratrådt, afdeling, organisation, team);
         dbMedarbejder.update(medarbejder);
