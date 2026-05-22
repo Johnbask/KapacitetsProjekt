@@ -7,7 +7,6 @@ import Model.Organisation;
 import Model.Team;
 
 import java.sql.*;
-import java.time.chrono.IsoChronology;
 import java.util.ArrayList;
 
 public class DBMedarbejder extends Storage<Medarbejder> {

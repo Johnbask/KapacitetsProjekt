@@ -327,7 +327,7 @@ public class Controller {
     ==========================
     */
 
-    public Allokering createAllokering(int allokeringsId, YearMonth periode, double andel,
+    public Allokering createAllokering(int allokeringsId, YearMonth startPeriode, YearMonth slutPeriode, double andel,
                                        int medId, int projektId, int behovId) throws SQLException {
         Medarbejder medarbejder = dbMedarbejder.readById(medId);
         Projekt projekt = dbProjekt.readById(projektId);
@@ -338,7 +338,7 @@ public class Controller {
             return null;
         }
 
-        Allokering allokering = new Allokering(allokeringsId, periode, andel);
+        Allokering allokering = new Allokering(allokeringsId, startPeriode, slutPeriode, andel);
         allokering.addMedarbejder(medarbejder);
         allokering.setProjekt(projekt);
         allokering.setRessourceBehov(ressourceBehov);
@@ -356,7 +356,7 @@ public class Controller {
         return dbAllokering.readById(allokeringsId);
     }
 
-    public void updateAllokering(int nyAllokeringsId, YearMonth nyPeriode, double nyAndel,
+    public void updateAllokering(int nyAllokeringsId, YearMonth nyStartPeriode, YearMonth nySlutPeriode ,double nyAndel,
                                  int nyMedId, int nyProjektId, int nyBehovId) throws SQLException {
         Medarbejder medarbejder = dbMedarbejder.readById(nyMedId);
         Projekt projekt = dbProjekt.readById(nyProjektId);
@@ -367,7 +367,7 @@ public class Controller {
             return;
         }
 
-        Allokering allokering = new Allokering(nyAllokeringsId, nyPeriode, nyAndel);
+        Allokering allokering = new Allokering(nyAllokeringsId, nyStartPeriode, nySlutPeriode, nyAndel);
         allokering.addMedarbejder(medarbejder);
         allokering.setProjekt(projekt);
         allokering.setRessourceBehov(behov);
@@ -554,7 +554,7 @@ public class Controller {
         double samledeAndel = 0;
 
         for (Allokering allokering : allokeringer) {
-            if (allokering.getPeriode().equals(periode)) {
+            if (erIPeriode(allokering, periode)) {
                 samledeAndel += allokering.getAndel();
             }
         }
@@ -572,12 +572,16 @@ public class Controller {
         double samletAndel = 0;
 
         for (Allokering allokering : allokeringer) {
-            if (allokering.getPeriode().equals(periode)) {
+            if (erIPeriode(allokering, periode)) {
                 samletAndel += allokering.getAndel();
             }
         }
 
         return 1.0 - samletAndel;
+    }
+
+    private boolean erIPeriode(Allokering allokering, YearMonth periode) {
+        return !periode.isBefore(allokering.getStartPeriode()) && !periode.isAfter(allokering.getSlutPeriode());
     }
 
     // TODO: CHECK 1..* PROJEKTER
@@ -628,8 +632,16 @@ public class Controller {
         Map<YearMonth, Double> ledighedMap = new HashMap<>();
 
         for (Allokering a : allokeringer) {
-            YearMonth periode = a.getPeriode();
-            ledighedMap.put(periode, ledighedMap.getOrDefault(periode, 1.0) - a.getAndel());
+            YearMonth current = a.getStartPeriode();
+
+            while (!current.isAfter(a.getSlutPeriode())) {
+                ledighedMap.put(
+                        current,
+                        ledighedMap.getOrDefault(current, 1.0) - a.getAndel()
+                );
+
+                current = current.plusMonths(1);
+            }
         }
 
         System.out.println("Ledighed for " + medarbejder.getNavn() + " (" + medarbejder.getInitialer() + ")");
@@ -715,7 +727,7 @@ public class Controller {
             double total = 0;
 
             for (Allokering a : alleAllokeringer) {
-                if (a.getPeriode().equals(periode)) {
+                if (erIPeriode(a, periode)) {
                     for (Medarbejder am : a.getMedarbejdere()) {
                         if (am.getMedId() == m.getMedId()) {
                             total += a.getAndel();

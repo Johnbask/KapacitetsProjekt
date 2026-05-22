@@ -18,8 +18,10 @@ import javafx.stage.Stage;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class MedarbejderOversigt extends GridPane {
 
@@ -38,6 +40,19 @@ public class MedarbejderOversigt extends GridPane {
     private Button btnDelete;
     private Button btnMeldinger;
 
+
+    /*
+    Search function
+     */
+    private TextField txfSøg;
+    private Button btnSøg;
+    private Button btnReset;
+
+    /*
+    TODO: Ret allokering
+     */
+
+
     public MedarbejderOversigt() {
         initContent();
         initActions();
@@ -50,6 +65,7 @@ public class MedarbejderOversigt extends GridPane {
         this.setPadding(new Insets(10));
         this.setHgap(20);
         this.setVgap(10);
+
 
         // ==========================================
         // TABLEVIEW
@@ -137,7 +153,7 @@ public class MedarbejderOversigt extends GridPane {
                colAfdeling, colOrganisation, colTeam
        );
 
-       this.add(tvwMedarbejdere, 0, 0);
+
 
         // ==========================================
         // BUTTONS (BOTTOM LEFT)
@@ -153,16 +169,25 @@ public class MedarbejderOversigt extends GridPane {
 
         buttonBox.getChildren().addAll(btnOpret, btnRediger, btnDelete, btnOpenAllokering, btnUpdate, btnMeldinger);
 
-        this.add(buttonBox, 0, 1);
-
         /*
-        tvwMedarbejdere.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue != null) {
-                showTimelineWindow(newValue);
-            }
-        });
-
+        =============================
+        |       Search Function     |
+        =============================
          */
+        txfSøg = new TextField();
+        txfSøg.setPromptText("Skrive et navn eller initialer...");
+        txfSøg.setPrefWidth(250);
+
+        btnSøg = new Button("Søg");
+        btnReset = new Button("Vis alle");
+
+        HBox searchBox = new HBox(10, new Label("Søg:"), txfSøg, btnSøg, btnReset);
+        searchBox.setAlignment(Pos.CENTER_LEFT);
+
+        this.add(searchBox, 0, 0);
+        this.add(tvwMedarbejdere, 0, 1);
+        this.add(buttonBox, 0, 2);
+
     }
 
     private void initActions() {
@@ -205,6 +230,26 @@ public class MedarbejderOversigt extends GridPane {
         });
 
         btnMeldinger.setOnAction(e -> meldingerWindow());
+
+        btnSøg.setOnAction(e -> {
+            String søgeord = txfSøg.getText().trim();
+            if (søgeord.isEmpty()) {
+                showAlert("Skriv et navn at søge på.");
+                return;
+            }
+
+            try {
+                ArrayList<Medarbejder> resultater = controller.søgMedarbejderNavn(søgeord);
+                tvwMedarbejdere.getItems().setAll(resultater);
+                if (resultater.isEmpty()) {
+                    showAlert("Ingen medarbejder fundet med navn: " + søgeord);
+                }
+            } catch (SQLException ex) {
+                showAlert("Fejl ved søgning:\n" + ex.getMessage());
+            }
+        });
+
+        btnReset.setOnAction(e -> loadMedarbejdere());
     }
 
     // ==========================================
@@ -257,11 +302,21 @@ public class MedarbejderOversigt extends GridPane {
         YearMonth max = null;
 
         for (Allokering a : relevant) {
-            YearMonth ym = a.getPeriode();
+            YearMonth start = a.getStartPeriode();
+            YearMonth slut = a.getSlutPeriode();
 
-            if (min == null || ym.isBefore(min)) min = ym;
-            if (max == null || ym.isAfter(max)) max = ym;
+            if (start == null || slut == null) continue;
+
+            if (start.isAfter(slut)) {
+                System.out.println("Ugyldig allokering (start -> slut): " + a);
+                continue;
+            }
+
+            if (min == null || start.isBefore(min)) min = start;
+            if (max == null || slut.isAfter(max)) max = slut;
         }
+
+        if (min == null || max == null) return;
 
         // ==========================================
         // HEADER
@@ -325,13 +380,21 @@ public class MedarbejderOversigt extends GridPane {
         // ==========================================
         // PROJECT ROWS
         // ==========================================
+        int row = 3;
+
+
         List<Projekt> projekter = relevant.stream()
                 .map(Allokering::getProjekt)
                 .filter(p -> p != null)
-                .distinct()
+                .collect(Collectors.toMap(
+                        Projekt::getProjektId,
+                        p -> p,
+                        (existing, duplicate) -> existing
+                ))
+                .values()
+                .stream()
                 .toList();
 
-        int row = 3;
 
         for (Projekt projekt : projekter) {
 
@@ -344,45 +407,84 @@ public class MedarbejderOversigt extends GridPane {
 
             timelineGrid.add(projektLabel, 0, row);
 
+            List<Allokering> projektAllokeringer = relevant.stream()
+                    .filter(a -> a.getProjekt() != null
+                    && a.getProjekt().getProjektId() == projekt.getProjektId())
+                    .toList();
+
             current = min;
             col = 1;
 
             while (!current.isAfter(max)) {
 
+                final YearMonth currentMonth = current;
+
                 Label cell = new Label();
                 cell.setMinSize(80, 30);
                 cell.setAlignment(Pos.CENTER);
 
-                boolean found = false;
+                Optional<Allokering> match = projektAllokeringer.stream()
+                        .filter(a -> a.getStartPeriode() != null && a.getSlutPeriode() != null
+                        && !currentMonth.isBefore(a.getStartPeriode())
+                        && !currentMonth.isAfter(a.getSlutPeriode()))
+                        .findFirst();
 
-                for (Allokering a : relevant) {
-
-                    if (a.getProjekt() != null && a.getProjekt() == projekt &&
-                            a.getPeriode().equals(current)) {
-
-                        cell.setText(String.valueOf(a.getAndel()));
-                        cell.setStyle(
-                                "-fx-background-color: #dee2e6;" +
-                                        "-fx-border-color: black;"
-                        );
-
-                        found = true;
-                        break;
-                    }
-                }
-
-                if (!found) {
+                if (match.isPresent()) {
+                    cell.setText(String.valueOf(match.get().getAndel()));
+                    cell.setStyle(
+                            "-fx-background-color: #dee2e6;" +
+                                    "-fx-border-color: black;"
+                    );
+                } else {
                     cell.setStyle("-fx-border-color: lightgray;");
                 }
 
-                timelineGrid.add(cell, col, row);
 
+
+        /*
+        for (Allokering allokering : relevant) {
+
+            Projekt projekt = allokering.getProjekt();
+            if (projekt == null) continue;
+            if (allokering.getStartPeriode() == null || allokering.getSlutPeriode() == null) continue;
+            if (allokering.getStartPeriode().isAfter(allokering.getSlutPeriode())) continue;
+
+            Label projektLabel = new Label(projekt.getNavn());
+            projektLabel.setMinSize(120, 30);
+            projektLabel.setStyle("-fx-font-weight: bold;" +
+                    "-fx-border-color: black;");
+            timelineGrid.add(projektLabel, 0, row);
+
+            current = min;
+            col = 1;
+
+            while (!current.isAfter(max)) {
+                final YearMonth currentMonth = current;
+
+                Label cell = new Label();
+                cell.setMinSize(80, 30);
+                cell.setAlignment(Pos.CENTER);
+
+                YearMonth start = allokering.getStartPeriode();
+                YearMonth slut = allokering.getSlutPeriode();
+
+                if (!currentMonth.isBefore(start) && !currentMonth.isAfter(slut)) {
+                    cell.setText(String.valueOf(allokering.getAndel()));
+                    cell.setStyle("-fx-background-color: #dee2e6; -fx-border-color: black;");
+                } else {
+                    cell.setStyle("-fx-border-color: lightgray;");
+                }
+
+         */
+                timelineGrid.add(cell, col, row);
                 current = current.plusMonths(1);
                 col++;
+
             }
 
             row++;
         }
+
     }
 
     // ==========================================

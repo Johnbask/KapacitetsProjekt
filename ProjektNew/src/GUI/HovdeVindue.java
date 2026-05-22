@@ -41,6 +41,7 @@ public class HovdeVindue extends Application {
         // =====================================================
         // ALLOKERINGER (testdata)
         // =====================================================
+        /*
         Allokering a1 = new Allokering(1, YearMonth.of(2026, 9), 0.8);
         Allokering a2 = new Allokering(2, YearMonth.of(2026, 10), 0.6);
         Allokering a3 = new Allokering(3, YearMonth.of(2026, 11), 0.9);
@@ -49,6 +50,7 @@ public class HovdeVindue extends Application {
         Allokering a6 = new Allokering(6, YearMonth.of(2027, 2), 0.6);
         Allokering a7 = new Allokering(7, YearMonth.of(2027, 3), 0.4);
 
+
         a1.addMedarbejder(m1);
         a2.addMedarbejder(m1);
         a3.addMedarbejder(m1);
@@ -56,6 +58,8 @@ public class HovdeVindue extends Application {
         a5.addMedarbejder(m2);
         a6.addMedarbejder(m3);
         a7.addMedarbejder(m3);
+        */
+
 
         // =====================================================
         // PROJEKTER — delt muterbar liste
@@ -87,6 +91,7 @@ public class HovdeVindue extends Application {
         // =====================================================
         // VIEWS
         // =====================================================
+        Dashboard dashboardPane = new Dashboard();
         ProjektOversigt projektPane = new ProjektOversigt();
         BehovOversigt behovPane = new BehovOversigt();
         MedarbejderOversigt medarbejderPane = new MedarbejderOversigt();
@@ -117,19 +122,28 @@ public class HovdeVindue extends Application {
             behovPane.setProjekter(projekter);
         });
 
+
         // =====================================================
         // TABS
         // =====================================================
+        Tab tabDashboard = new Tab("Dashboard", dashboardPane);
         Tab tabBehov      = new Tab("Behov oversigt",      behovPane);
         Tab tabMedarbejder = new Tab("Medarbejder oversigt", medarbejderPane);
         Tab tabProjekt    = new Tab("Projekt oversigt",     projektPane);
         Tab tabTeams      = new Tab("Team oversigt",        teamPane);
 
-        tabPane.getTabs().addAll(tabBehov, tabMedarbejder, tabProjekt, tabTeams);
+        tabPane.getTabs().addAll(tabDashboard, tabBehov, tabMedarbejder, tabProjekt, tabTeams);
 
         pane.setCenter(tabPane);
 
         Scene scene = new Scene(pane, 1200, 650);
+
+        // Dashboard
+        tabDashboard.setOnSelectionChanged(e -> {
+            if (tabDashboard.isSelected()) {
+                dashboardPane.initContent();
+            }
+        });
 
         // Dynamisk størrelse — alt indeni følger med automatisk
         pane.prefWidthProperty().bind(scene.widthProperty());

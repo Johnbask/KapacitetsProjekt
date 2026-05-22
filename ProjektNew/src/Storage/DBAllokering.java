@@ -14,18 +14,19 @@ import java.util.ArrayList;
 public class DBAllokering extends Storage<Allokering> {
     @Override
     public void insert(Allokering allokering) throws SQLException {
-        String query = "INSERT INTO Allokering (allokeringsId, periode, andel, medId, projektId, behovId) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO Allokering (allokeringsId, startPeriode, slutPeriode, andel, medId, projektId, behovId) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection minConnection = getConnection();
              PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
             pstmt.setInt(1, allokering.getAllokeringsId());
-            pstmt.setString(2, allokering.getPeriode().toString());
-            pstmt.setDouble(3, allokering.getAndel());
-            pstmt.setInt(4, allokering.getMedarbejdere().get(0).getMedId());
-            pstmt.setInt(5, allokering.getProjekt().getProjektId());
-            pstmt.setInt(6, allokering.getRessourceBehov().getBehovId());
+            pstmt.setString(2, allokering.getStartPeriode().toString());
+            pstmt.setString(3, allokering.getSlutPeriode().toString());
+            pstmt.setDouble(4, allokering.getAndel());
+            pstmt.setInt(5, allokering.getMedarbejdere().get(0).getMedId());
+            pstmt.setInt(6, allokering.getProjekt().getProjektId());
+            pstmt.setInt(7, allokering.getRessourceBehov().getBehovId());
 
             int rows = pstmt.executeUpdate();
 
@@ -46,7 +47,7 @@ public class DBAllokering extends Storage<Allokering> {
     @Override
     public ArrayList<Allokering> readAll() throws SQLException {
         String query = "SELECT " +
-                "a.allokeringsId, a.periode, a.andel, m.medId, " +
+                "a.allokeringsId, a.startPeriode, a.slutPeriode , a.andel, m.medId, " +
                 "p.projektId, p.navn AS ProjektNavn, " +
                 "rb.behovId " +
                 "FROM Allokering a " +
@@ -77,7 +78,7 @@ public class DBAllokering extends Storage<Allokering> {
     @Override
     public Allokering readById(int id) throws SQLException {
         String query = "SELECT " +
-                "a.allokeringsId, a.periode, a.andel, m.medId, " +
+                "a.allokeringsId, a.startPeriode, a.slutPeriode , a.andel, m.medId, " +
                 "p.projektId, p.navn AS ProjektNavn, " +
                 "rb.behovId " +
                 "FROM Allokering a " +
@@ -113,18 +114,19 @@ public class DBAllokering extends Storage<Allokering> {
     @Override
     public void update(Allokering allokering) throws SQLException {
         String query = "UPDATE Allokering " +
-                "SET periode = ?, andel = ?, medId = ?, projektId = ?, behovId = ? " +
+                "SET startPeriode = ?, slutPeriode = ?, andel = ?, medId = ?, projektId = ?, behovId = ? " +
                 "WHERE allokeringsId = ?";
 
         try (Connection minConnection = getConnection();
              PreparedStatement pstmt = minConnection.prepareStatement(query)) {
 
-            pstmt.setString(1, allokering.getPeriode().toString());
-            pstmt.setDouble(2, allokering.getAndel());
-            pstmt.setInt(3, allokering.getMedarbejdere().get(0).getMedId());
-            pstmt.setInt(4, allokering.getProjekt().getProjektId());
-            pstmt.setInt(5, allokering.getRessourceBehov().getBehovId());
-            pstmt.setInt(6, allokering.getAllokeringsId());
+            pstmt.setString(1, allokering.getStartPeriode().toString());
+            pstmt.setString(2, allokering.getSlutPeriode().toString());
+            pstmt.setDouble(3, allokering.getAndel());
+            pstmt.setInt(4, allokering.getMedarbejdere().get(0).getMedId());
+            pstmt.setInt(5, allokering.getProjekt().getProjektId());
+            pstmt.setInt(6, allokering.getRessourceBehov().getBehovId());
+            pstmt.setInt(7, allokering.getAllokeringsId());
 
             int rows = pstmt.executeUpdate();
 
@@ -185,7 +187,8 @@ public class DBAllokering extends Storage<Allokering> {
     private Allokering helperMethod(ResultSet rs) throws SQLException {
         Allokering allokering = new Allokering(
                 rs.getInt("allokeringsId"),
-                YearMonth.parse(rs.getString("periode")),
+                YearMonth.parse(rs.getString("startPeriode")),
+                YearMonth.parse(rs.getString("slutPeriode")),
                 rs.getDouble("andel")
         );
 

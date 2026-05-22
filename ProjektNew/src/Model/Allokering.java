@@ -1,20 +1,23 @@
 package Model;
 
+import java.time.Year;
 import java.time.YearMonth;
 import java.util.ArrayList;
 
 public class Allokering {
     private int allokeringsId;
-    private YearMonth periode;
+    private YearMonth startPeriode;
+    private YearMonth slutPeriode;
     private double andel;
 
     private ArrayList<Medarbejder> medarbejdere = new ArrayList<>();
     private Projekt projekt;
     private RessourceBehov ressourceBehov;
 
-    public Allokering(int allokeringsId, YearMonth periode, double andel) {
+    public Allokering(int allokeringsId, YearMonth startPeriode, YearMonth slutPeriode, double andel) {
         this.allokeringsId = allokeringsId;
-        this.periode = periode;
+        this.startPeriode = startPeriode;
+        this.slutPeriode = slutPeriode;
         this.andel = andel;
     }
 
@@ -26,12 +29,20 @@ public class Allokering {
         this.allokeringsId = allokeringsId;
     }
 
-    public YearMonth getPeriode() {
-        return periode;
+    public YearMonth getStartPeriode() {
+        return startPeriode;
     }
 
-    public void setPeriode(YearMonth periode) {
-        this.periode = periode;
+    public void setStartPeriode(YearMonth startPeriode) {
+        this.startPeriode = startPeriode;
+    }
+
+    public YearMonth getSlutPeriode() {
+        return slutPeriode;
+    }
+
+    public void setSlutPeriode(YearMonth slutPeriode) {
+        this.slutPeriode = slutPeriode;
     }
 
     public double getAndel() {
@@ -77,6 +88,6 @@ public class Allokering {
 
     @Override
     public String toString() {
-        return "Allokering: " + periode + ", " + andel;
+        return "Allokering: " + startPeriode + ", " + slutPeriode + ", " + andel;
     }
 }
