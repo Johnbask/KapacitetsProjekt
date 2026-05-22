@@ -6,16 +6,19 @@ import Model.Enum.MedarbejderType;
 import Model.Medarbejder;
 import Model.Projekt;
 import Model.RessourceBehov;
+import Storage.DBAllokering;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.Node;
+import javafx.scene.control.*;
+import javafx.scene.control.skin.ComboBoxPopupControl;
 import javafx.scene.layout.*;
 
 import java.sql.SQLException;
+import java.time.DateTimeException;
+import java.time.YearMonth;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -61,13 +64,12 @@ public class Dashboard extends GridPane {
 
         tvwOversigt.getColumns().addAll(colNavn, colTeam, colProjekt, colAllokering);
 
-
     }
 
     /*
-    =========================
-    |       LOAD DATA       |
-    =========================
+    ===================================
+    |       LOAD DATA / VIS DATA      |
+    ===================================
     */
     public void loadData() {
         getChildren().clear();
@@ -165,7 +167,7 @@ public class Dashboard extends GridPane {
             }
 
             this.add(tvwOversigt, 0, 2, 3, 1);
-
+            this.add(crudAllokering(), 0, 3, 3, 1);
 
             for (int i = 0; i < 3; i++) {
                 ColumnConstraints cc = new ColumnConstraints();
@@ -228,6 +230,366 @@ public class Dashboard extends GridPane {
 
     /*
     =============================
+    |       CRUD ALLOKERING     |
+    =============================
+     */
+
+    private HBox crudAllokering() {
+        Button btnCreate = new Button("Opret Allokering");
+        Button btnUpdate = new Button("Rediger Allokering");
+        Button btnDelete = new Button("Slet Allokering");
+
+        btnCreate.setOnAction(e -> createAllokering());
+        btnUpdate.setOnAction(e -> updateAllokering());
+        btnDelete.setOnAction(e -> deleteAllokering());
+
+        HBox hBox = new HBox(10);
+        hBox.setPadding(new Insets(10, 0, 0, 0));
+        hBox.getChildren().addAll(btnCreate, btnUpdate, btnDelete);
+        return hBox;
+    }
+
+    private void createAllokering() {
+        MedarbejderRow valgt = tvwOversigt.getSelectionModel().getSelectedItem();
+        if (valgt == null) {
+            showAlert("Vælg en medarbejder i tabellen først");
+            return;
+        }
+
+        Medarbejder medarbejder;
+        try {
+            medarbejder = controller.getAlleMedarbejdere().stream()
+                    .filter(m -> m.getNavn().equals(valgt.navn))
+                    .findFirst()
+                    .orElse(null);
+            if (medarbejder == null) {
+                showAlert("Kunne ikke finde medarbejderen.");
+                return;
+            }
+        } catch (SQLException e) {
+            showAlert("fejl: " + e.getMessage());
+            return;
+        }
+
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Opret Allokering");
+        dialog.setHeaderText("Ny allokering for: " + medarbejder.getNavn());
+
+        ButtonType btnOpret = new ButtonType("Opret", ButtonBar.ButtonData.OK_DONE);
+        ButtonType btnAnnuller = new ButtonType("Annuller", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialog.getDialogPane().getButtonTypes().addAll(btnOpret, btnAnnuller);
+
+        GridPane form = new GridPane();
+        form.setHgap(10);
+        form.setVgap(10);
+        form.setPadding(new Insets(20));
+
+        ComboBox<Projekt> cbProjekt = new ComboBox<>();
+        try {
+            cbProjekt.getItems().addAll(controller.getAlleProjekter());
+        } catch (SQLException e) {
+            showAlert("Fejl ved hentning af projekter: " + e.getMessage());
+            return;
+        }
+        cbProjekt.setPromptText("Vælg projekt");
+        cbProjekt.setMaxWidth(Double.MAX_VALUE);
+
+        ComboBox<RessourceBehov> cbBehov = new ComboBox<>();
+        cbBehov.setPromptText("Vælg ressourceBehov");
+        cbBehov.setMaxWidth(Double.MAX_VALUE);
+        cbBehov.setDisable(true);
+
+        cbProjekt.setOnAction(e -> {
+            cbBehov.getItems().clear();
+            Projekt valgtProjekt = cbProjekt.getValue();
+            if (valgtProjekt != null) {
+                try {
+                    ArrayList<RessourceBehov> alleBehov = controller.getAlleRessourceBehov();
+                    List<RessourceBehov> filtreret = alleBehov.stream()
+                            .filter(rb -> rb.getProjekt() != null &&
+                                    rb.getProjekt().getProjektId() == valgtProjekt.getProjektId())
+                            .toList();
+
+                    cbBehov.getItems().addAll(filtreret);
+                    cbBehov.setDisable(filtreret.isEmpty());
+
+                    if (filtreret.isEmpty()) {
+                        cbBehov.setPromptText("Ingen ressource behov på dette projekt");
+                    } else {
+                        cbBehov.setPromptText("Vælg ressource behov");
+                    }
+                } catch (SQLException ex) {
+                    showAlert("Fejl ved hentning af ressource behov: " + ex.getMessage());
+                }
+            }
+        });
+
+        TextField txfStart = new TextField();
+        txfStart.setPromptText("YYYY-MM");
+
+        TextField txfSlut = new TextField();
+        txfSlut.setPromptText("YYYY-MM");
+
+        TextField txfAndel = new TextField();
+        txfAndel.setPromptText("0.25, 0.5...");
+
+        form.add(new Label("Projekt"), 0, 0); form.add(cbProjekt, 1, 0);
+        form.add(new Label("Ressource Behov"), 0, 1); form.add(cbBehov, 1, 1);
+        form.add(new Label("Start periode"), 0, 2); form.add(txfStart, 1, 2);
+        form.add(new Label("Slut periode"), 0, 3); form.add(txfSlut, 1, 3);
+        form.add(new Label("Andel:"), 0, 4); form.add(txfAndel, 1, 4);
+
+        dialog.getDialogPane().setContent(form);
+        dialog.getDialogPane().setPrefWidth(420);
+
+        Node opretButton = dialog.getDialogPane().lookupButton(btnOpret);
+        opretButton.setDisable(true);
+
+        Runnable validateFields = () -> {
+            boolean ok = cbProjekt.getValue() != null
+                    && !txfStart.getText().isBlank()
+                    && !txfSlut.getText().isBlank()
+                    && !txfAndel.getText().isBlank();
+            opretButton.setDisable(!ok);
+        };
+
+        cbProjekt.valueProperty().addListener((observable, oldValue, newValue) -> validateFields.run());
+        txfStart.textProperty().addListener((observable, oldValue, newValue) ->  validateFields.run());
+        txfSlut.textProperty().addListener((observable, oldValue, newValue) ->  validateFields.run());
+        txfAndel.textProperty().addListener((observable, oldValue, newValue) ->  validateFields.run());
+
+        Optional<ButtonType> result = dialog.showAndWait();
+        if (result.isEmpty() || result.get() != btnOpret) return;
+
+        try {
+            YearMonth start = YearMonth.parse(txfStart.getText().trim());
+            YearMonth slut = YearMonth.parse(txfSlut.getText().trim());
+            double andel = Double.parseDouble(txfAndel.getText().trim());
+            Projekt projekt = cbProjekt.getValue();
+            RessourceBehov behov = cbBehov.getValue();
+
+            if (slut.isBefore(start)) {
+                showAlert("Slutperiode må ikke være før startperiode.");
+                return;
+            }
+
+            if (andel <= 0 || andel > 1) {
+                showAlert("Andel skal være mellem 0 og 1");
+                return;
+            }
+
+            int behovId = behov != null ? behov.getBehovId() : -1;
+
+            int næsteId = næsteAllokeringsId();
+
+             controller.createAllokering(
+                     næsteId,
+                     start,
+                     slut,
+                     andel,
+                     medarbejder.getMedId(),
+                     projekt.getProjektId(),
+                     behovId
+             );
+
+             loadData();
+
+        } catch (DateTimeParseException e) {
+            showAlert("Ugyldig dataformat. Brug YYYY-MM, fx 2025-01.");
+        } catch (NumberFormatException e) {
+            showAlert("Andel skal være et tal, fx 0.5");
+        } catch (SQLException e) {
+            showAlert("Fejl ved oprettelse: " + e.getMessage());
+        }
+    }
+
+    private void updateAllokering() {
+        MedarbejderRow valgt = tvwOversigt.getSelectionModel().getSelectedItem();
+        if (valgt == null) {
+            showAlert("Vælg en medarbejder i tabellen først");
+            return;
+        }
+
+        Medarbejder medarbejder;
+        Allokering eksisterende;
+        ArrayList<Projekt> projekter;
+
+        try {
+            medarbejder = controller.getAlleMedarbejdere().stream()
+                    .filter(m -> m.getNavn().equals(valgt.navn))
+                    .findFirst()
+                    .orElse(null);
+            if (medarbejder == null) {
+                showAlert("Kunne ikke finde medarbejderen.");
+                return;
+            }
+
+            List<Allokering> mineAllokeringer = controller.getAlleAllokeringer().stream()
+                    .filter(a -> a.getMedarbejdere().stream()
+                            .anyMatch(m -> m.getMedId() == medarbejder.getMedId()))
+                    .toList();
+
+            if (mineAllokeringer.isEmpty()) {
+                showAlert(medarbejder.getNavn() + " har ingen allokeringer at redigere.");
+                return;
+            }
+
+            eksisterende = mineAllokeringer.getFirst();
+            projekter = controller.getAlleProjekter();
+
+        } catch (SQLException e) {
+            showAlert("fejl: " + e.getMessage());
+            return;
+        }
+
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Rediger Allokering");
+        dialog.setHeaderText("Rediger allokering for: " + medarbejder.getNavn());
+
+        ButtonType btnGem = new ButtonType("Gem", ButtonBar.ButtonData.OK_DONE);
+        ButtonType btnAnnuller = new ButtonType("Annuller", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialog.getDialogPane().getButtonTypes().addAll(btnGem, btnAnnuller);
+
+        GridPane form = new GridPane();
+        form.setHgap(10);
+        form.setVgap(10);
+        form.setPadding(new Insets(20));
+
+        ComboBox<Allokering> cbAllokering = new ComboBox<>();
+        try {
+            cbAllokering.getItems().addAll(
+                    controller.getAlleAllokeringer().stream()
+                            .filter(a -> a.getMedarbejdere().stream()
+                                    .anyMatch(m -> m.getMedId() == medarbejder.getMedId()))
+                            .toList()
+            );
+        } catch (SQLException e) {
+            showAlert("Fejl: " + e.getMessage());
+            return;
+        }
+
+        cbAllokering.setValue(eksisterende);
+        cbAllokering.setMaxWidth(Double.MAX_VALUE);
+
+        ComboBox<Projekt> cbProjekt = new ComboBox<>();
+        cbProjekt.getItems().addAll(projekter);
+        cbProjekt.setValue(eksisterende.getProjekt());
+        cbProjekt.setMaxWidth(Double.MAX_VALUE);
+
+        ComboBox<RessourceBehov> cbBehov = new ComboBox<>();
+        cbBehov.setPromptText("Valgfrit");
+        cbBehov.setMaxWidth(Double.MAX_VALUE);
+
+        Runnable opdaterBehov = () -> {
+            cbBehov.getItems().clear();
+            Projekt p = cbProjekt.getValue();
+            if (p != null) {
+                try {
+                    ArrayList<RessourceBehov> alleBehov = controller.getAlleRessourceBehov();
+                    List<RessourceBehov> filtreret = alleBehov.stream()
+                            .filter(rb -> rb.getProjekt() != null &&
+                                    rb.getProjekt().getProjektId() == p.getProjektId())
+                            .toList();
+
+                    cbBehov.getItems().addAll(filtreret);
+
+                    Allokering aktuel = cbAllokering.getValue() != null ? cbAllokering.getValue() : eksisterende;
+                    RessourceBehov aktivBehov = aktuel.getRessourceBehov();
+                    if (aktivBehov != null &&
+                    aktivBehov.getProjekt() != null &&
+                    aktivBehov.getProjekt().getProjektId() == p.getProjektId()) {
+                        cbBehov.setValue(aktivBehov);
+                    }
+
+                } catch (SQLException ex) {
+                    showAlert("Fejl ved hentning af ressourcebehov: " + ex.getMessage());
+                }
+            }
+        };
+
+        opdaterBehov.run();
+
+        cbProjekt.setOnAction(e -> opdaterBehov.run());
+
+        TextField txfStart = new TextField(eksisterende.getStartPeriode().toString());
+        TextField txfSlut = new TextField(eksisterende.getSlutPeriode().toString());
+        TextField txfAndel = new TextField(String.valueOf(eksisterende.getAndel()));
+
+        cbAllokering.setOnAction(e -> {
+            Allokering valgtAllokering = cbAllokering.getValue();
+            if (valgtAllokering == null) return;
+            cbProjekt.setValue(valgtAllokering.getProjekt());
+            txfStart.setText(valgtAllokering.getStartPeriode().toString());
+            txfSlut.setText(valgtAllokering.getSlutPeriode().toString());
+            txfAndel.setText(String.valueOf(valgtAllokering.getAndel()));
+            opdaterBehov.run();
+        });
+
+        form.add(new Label("Allokering:"), 0, 0); form.add(cbAllokering, 1, 0);
+        form.add(new Label("Projekt:"), 0, 1); form.add(cbProjekt, 1, 1);
+        form.add(new Label("Ressource behov:"), 0, 2); form.add(cbBehov, 1, 2);
+        form.add(new Label("Start periode:"), 0, 3); form.add(txfStart, 1, 3);
+        form.add(new Label("Slut periode"), 0, 4); form.add(txfSlut, 1, 4);
+        form.add(new Label("Andel:"), 0, 5); form.add(txfAndel, 1, 5);
+
+        dialog.getDialogPane().setContent(form);
+        dialog.getDialogPane().setPrefWidth(450);
+
+        Optional<ButtonType> result = dialog.showAndWait();
+        if (result.isEmpty() || result.get() != btnGem) return;
+
+        try {
+            Allokering valgtAllokering = cbAllokering.getValue();
+            YearMonth start = YearMonth.parse(txfStart.getText().trim());
+            YearMonth slut = YearMonth.parse(txfSlut.getText().trim());
+            double andel = Double.parseDouble(txfAndel.getText().trim());
+            Projekt projekt = cbProjekt.getValue();
+            RessourceBehov behov = cbBehov.getValue();
+
+            if (projekt == null) {
+                showAlert("Vælg venligst et projekt.");
+                return;
+            }
+
+            if (slut.isBefore(start)) {
+                showAlert("Slut periode må ikke være før start periode");
+                return;
+            }
+
+            if (andel <= 0 || andel > 1) {
+                showAlert("Andel skal være mellem 0 og 1.");
+                return;
+            }
+
+            int behovId = behov != null ? behov.getBehovId() : -1;
+
+            controller.updateAllokering(
+                    valgtAllokering.getAllokeringsId(),
+                    start,
+                    slut,
+                    andel,
+                    medarbejder.getMedId(),
+                    projekt.getProjektId(),
+                    behovId
+            );
+
+            loadData();
+
+        } catch (DateTimeParseException e) {
+            showAlert("Ugyldigt datoformat. Brug YYYY-MM, fx 2025-01");
+        } catch (NumberFormatException e) {
+            showAlert("Andel skal være et tal, fx 0.5");
+        } catch (SQLException e) {
+            showAlert("Fejl ved opdatering: " + e.getMessage());
+        }
+    }
+
+    private void deleteAllokering() {
+
+    }
+
+    /*
+    =============================
     |       HJÆLPEKLASSE        |
     =============================
      */
@@ -257,6 +619,14 @@ public class Dashboard extends GridPane {
         alert.setHeaderText(null);
         alert.setContentText(besked);
         alert.showAndWait();
+    }
+
+    private int næsteAllokeringsId() throws SQLException {
+        ArrayList<Allokering> alle = controller.getAlleAllokeringer();
+        return alle.stream()
+                .mapToInt(Allokering::getAllokeringsId)
+                .max()
+                .orElse(0) + 1;
     }
 
 }

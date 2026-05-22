@@ -250,12 +250,6 @@ public class TeamOversigt extends BorderPane {
     private void loadAllokeringer() {
         try {
             allokeringer = controller.getAlleAllokeringer();
-            System.out.println("Allokeringer loaded: " + allokeringer.size());
-            for (Allokering a : allokeringer) {
-                System.out.println("    Allokering " + a.getAllokeringsId() +
-                        " - medarbejdere: " + a.getMedarbejdere().size() +
-                        " - projekt: " + (a.getProjekt() != null ? a.getProjekt().getNavn() : "NULL"));;
-            }
         } catch (SQLException e) {
             allokeringer = List.of();
             System.out.println("Fejl ved hentning af allokeringer: " + e.getMessage());

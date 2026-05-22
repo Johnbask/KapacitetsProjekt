@@ -40,18 +40,12 @@ public class MedarbejderOversigt extends GridPane {
     private Button btnDelete;
     private Button btnMeldinger;
 
-
     /*
     Search function
      */
     private TextField txfSøg;
     private Button btnSøg;
     private Button btnReset;
-
-    /*
-    TODO: Ret allokering
-     */
-
 
     public MedarbejderOversigt() {
         initContent();
@@ -247,9 +241,13 @@ public class MedarbejderOversigt extends GridPane {
             } catch (SQLException ex) {
                 showAlert("Fejl ved søgning:\n" + ex.getMessage());
             }
+            txfSøg.clear();
         });
 
-        btnReset.setOnAction(e -> loadMedarbejdere());
+        btnReset.setOnAction(e -> {
+            loadMedarbejdere();
+            txfSøg.clear();
+        });
     }
 
     // ==========================================
@@ -803,6 +801,8 @@ public class MedarbejderOversigt extends GridPane {
         Button btnRediger = new Button("Gem ændringer");
         Button btnDelete = new Button("Slet Melding");
         Button btnLuk = new Button("Luk");
+        Button btnClear = new Button("Clear");
+        pane.add(btnClear, 2, 4);
 
         HBox btnBox = new HBox(10, btnOpret, btnRediger, btnDelete, btnLuk);
         btnBox.setPadding(new Insets(8, 0, 0, 0));
@@ -837,6 +837,8 @@ public class MedarbejderOversigt extends GridPane {
             } catch (SQLException ex) {
                 showAlert("Fejl ved søgning:\n" + ex.getMessage());
             }
+
+            txfSøg.clear();
         });
 
         btnVis.setOnAction(e -> {
@@ -845,6 +847,7 @@ public class MedarbejderOversigt extends GridPane {
             } catch (SQLException ex) {
                 showAlert("Fejl ved hentning:\n" + ex.getMessage());
             }
+            txfSøg.clear();
         });
 
         btnOpret.setOnAction(e -> {
@@ -870,6 +873,12 @@ public class MedarbejderOversigt extends GridPane {
             } catch (Exception exception1) {
                 showAlert("Fejl ved oprettelse:\n" + exception1.getMessage());
             }
+
+            txfMedarbejderNavn.clear();
+            txfSlutDato.clear();
+            txfStartDato.clear();
+            txaNoter.clear();
+            cmbType.setValue(null);
         });
 
         btnRediger.setOnAction(e -> {
@@ -912,10 +921,20 @@ public class MedarbejderOversigt extends GridPane {
             }
         });
 
+        btnClear.setOnAction(e -> {
+            txfMedarbejderNavn.clear();
+            txfStartDato.clear();
+            txfSlutDato.clear();
+            txaNoter.clear();
+            cmbType.setValue(null);
+        });
+
         btnLuk.setOnAction(e -> stage.close());
 
         stage.setScene(new Scene(root, 950, 600));
         stage.showAndWait();
+
+
     }
 
     /*

@@ -2,6 +2,7 @@ package Storage;
 
 import Model.Enum.ØkonomiType;
 import Model.Medarbejder;
+import Model.Projekt;
 import Model.RessourceBehov;
 
 import java.sql.Connection;
@@ -12,6 +13,7 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 
 public class DBRessourceBehov extends Storage<RessourceBehov> {
+    private final DBProjekt dbProjekt = new DBProjekt();
 
     @Override
     public void insert(RessourceBehov rb) throws SQLException {
@@ -135,7 +137,7 @@ public class DBRessourceBehov extends Storage<RessourceBehov> {
 
     private RessourceBehov helperMethod(ResultSet rs) throws SQLException {
 
-        return new RessourceBehov(
+        RessourceBehov rb = new RessourceBehov(
                 rs.getInt("behovId"),
                 rs.getString("rolle"),
                 YearMonth.parse(rs.getString("startPeriode")),
@@ -144,5 +146,11 @@ public class DBRessourceBehov extends Storage<RessourceBehov> {
                 rs.getDouble("timePris"),
                 ØkonomiType.valueOf(rs.getString("økonomiType"))
         );
+
+        int projektId = rs.getInt("projektId");
+        Projekt projekt = dbProjekt.readById(projektId);
+        rb.setProjekt(projekt);
+
+        return rb;
     }
 }
