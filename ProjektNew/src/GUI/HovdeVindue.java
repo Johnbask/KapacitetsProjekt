@@ -7,12 +7,14 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class HovdeVindue extends Application {
 
@@ -22,6 +24,8 @@ public class HovdeVindue extends Application {
     public void start(Stage stage) {
 
         stage.setTitle("Themis V_Pro");
+        java.io.File fil = new java.io.File("ProjektNew/resources/Themis1.png");
+        stage.getIcons().add(new Image(fil.toURI().toString()));
 
         BorderPane pane = new BorderPane();
 
@@ -34,10 +38,8 @@ public class HovdeVindue extends Application {
         List<Projekt> projekter = new ArrayList<>();
 
         try {
-            // Hent alle projekter
             projekter = new ArrayList<>(controller.getAlleProjekter());
 
-            // Hent alle ressourcebehov og kobl dem til de rigtige projekter
             ArrayList<RessourceBehov> alleBehov = controller.getAlleRessourceBehov();
 
             for (RessourceBehov rb : alleBehov) {
