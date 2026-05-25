@@ -6,17 +6,16 @@ import Model.Enum.MedarbejderType;
 import Model.Medarbejder;
 import Model.Projekt;
 import Model.RessourceBehov;
-import Storage.DBAllokering;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.skin.ComboBoxPopupControl;
 import javafx.scene.layout.*;
+import javafx.stage.Stage;
 
 import java.sql.SQLException;
-import java.time.DateTimeException;
 import java.time.YearMonth;
 import java.time.format.DateTimeParseException;
 import java.util.*;
@@ -26,6 +25,10 @@ public class Dashboard extends GridPane {
     private final Controller controller = Controller.getInstance();
 
     private TableView<MedarbejderRow> tvwOversigt;
+
+    private TextField txfSøg;
+    private Button btnSøg;
+    private Button btnReset;
 
     public Dashboard() {
         initContent();
@@ -64,6 +67,86 @@ public class Dashboard extends GridPane {
 
         tvwOversigt.getColumns().addAll(colNavn, colTeam, colProjekt, colAllokering);
 
+        /*
+        =========================
+        |       Search bar      |
+        =========================
+         */
+
+        txfSøg = new TextField();
+        txfSøg.setPromptText("Søg på medarbejder navn...");
+        txfSøg.setPrefWidth(250);
+
+        btnSøg = new Button("Søg");
+        btnReset = new Button("Vis alle");
+
+        btnSøg.setOnAction(e -> {
+            String søgeord = txfSøg.getText().trim();
+            if (søgeord.isEmpty()) {
+                showAlert("Skriv et navn at søge på.");
+                return;
+            }
+            try {
+                ArrayList<Medarbejder> resultater = controller.søgMedarbejderNavn(søgeord);
+                if (resultater.isEmpty()) {
+                    showAlert("Ingen medarbejder fundet med navn: " + søgeord);
+                    txfSøg.clear();
+                    return;
+                }
+
+                ArrayList<Allokering> allokeringer = controller.getAlleAllokeringer();
+
+                tvwOversigt.getItems().clear();
+
+                for (Medarbejder m : resultater) {
+                    List<Allokering> mine = allokeringer.stream()
+                            .filter(a -> a.getMedarbejdere().stream()
+                                    .anyMatch(am -> am.getMedId() == m.getMedId()))
+                            .sorted(Comparator.comparing(Allokering::getStartPeriode))
+                            .toList();
+
+                    String team = m.getTeam() != null ? m.getTeam().getNavn() : "-";
+
+                    String projekter = mine.stream()
+                            .map(Allokering::getProjekt)
+                            .filter(Objects::nonNull)
+                            .map(Projekt::getNavn)
+                            .distinct()
+                            .collect(Collectors.joining(", "));
+                    if (projekter.isEmpty()) projekter = "-";
+
+                    String allokeringsTekst = mine.stream()
+                            .map(a ->
+                                    a.getStartPeriode() +
+                                    " -> " +
+                                    a.getSlutPeriode() +
+                                    " (" + a.getAndel() + ")"
+                            )
+                            .collect(Collectors.joining("  |  "));
+                    if (allokeringsTekst.isEmpty()) allokeringsTekst = "ikke allokeret";
+
+                    tvwOversigt.getItems().add(new MedarbejderRow(
+                            m.getNavn(), team, projekter, allokeringsTekst
+                    ));
+                }
+
+            } catch (SQLException ex) {
+                showAlert("Fejl ved søgning:\n" + ex.getMessage());
+            }
+            txfSøg.clear();
+        });
+
+        btnReset.setOnAction(e -> {
+            try {
+                ArrayList<Medarbejder> alle = controller.getAlleMedarbejdere();
+                ArrayList<Allokering> allokeringer = controller.getAlleAllokeringer();
+                tvwOversigt.getItems().clear();
+            } catch (Exception ex) {
+                showAlert("Fejl: " + ex.getMessage());
+            }
+            loadData();
+            txfSøg.clear();
+        });
     }
 
     /*
@@ -129,9 +212,18 @@ public class Dashboard extends GridPane {
 
             /*
             =================================
-            |       ROW 2 - TABLEVIEW       |
+            |       ROW 2 - Search bar      |
             =================================
             */
+            HBox searchBox = new HBox(10, new Label("Søg:"), txfSøg, btnSøg, btnReset);
+            searchBox.setAlignment(Pos.CENTER_LEFT);
+            this.add(searchBox, 0, 2, 3, 1);
+
+            /*
+            =================================
+            |       ROW 3 - TABLEVIEW       |
+            =================================
+             */
             tvwOversigt.getItems().clear();
 
             for (Medarbejder m : medarbejdere) {
@@ -166,8 +258,8 @@ public class Dashboard extends GridPane {
                 ));
             }
 
-            this.add(tvwOversigt, 0, 2, 3, 1);
-            this.add(crudAllokering(), 0, 3, 3, 1);
+            this.add(tvwOversigt, 0, 3, 3, 1);
+            this.add(crudAllokering(), 0, 4, 3, 1);
 
             for (int i = 0; i < 3; i++) {
                 ColumnConstraints cc = new ColumnConstraints();
@@ -238,14 +330,34 @@ public class Dashboard extends GridPane {
         Button btnCreate = new Button("Opret Allokering");
         Button btnUpdate = new Button("Rediger Allokering");
         Button btnDelete = new Button("Slet Allokering");
+        Button btnTimeLine = new Button("Åben Allokering");
 
         btnCreate.setOnAction(e -> createAllokering());
         btnUpdate.setOnAction(e -> updateAllokering());
         btnDelete.setOnAction(e -> deleteAllokering());
+        btnTimeLine.setOnAction(e -> {
+            MedarbejderRow valgt = tvwOversigt.getSelectionModel().getSelectedItem();
+            if (valgt == null) {
+                showAlert("Vælg en medarbejder i tabellen først");
+                return;
+            }
+            try {
+                Medarbejder medarbejder = controller.getAlleMedarbejdere().stream()
+                        .filter(m -> m.getNavn().equals(valgt.navn))
+                        .findFirst().orElse(null);
+                if (medarbejder == null) {
+                    showAlert("Kunne ikke finde medarbejderen.");
+                    return;
+                }
+                showTimeLineWindow(medarbejder);
+            } catch (SQLException ex) {
+                showAlert("Fejl: " + ex.getMessage());
+            }
+        });
 
         HBox hBox = new HBox(10);
         hBox.setPadding(new Insets(10, 0, 0, 0));
-        hBox.getChildren().addAll(btnCreate, btnUpdate, btnDelete);
+        hBox.getChildren().addAll(btnCreate, btnUpdate, btnDelete, btnTimeLine);
         return hBox;
     }
 
@@ -585,7 +697,124 @@ public class Dashboard extends GridPane {
     }
 
     private void deleteAllokering() {
+        MedarbejderRow valgt = tvwOversigt.getSelectionModel().getSelectedItem();
+        if (valgt == null) {
+            showAlert("Vælg en medarbejder i tabellen først.");
+            return;
+        }
 
+        Medarbejder medarbejder;
+        List<Allokering> mineAllokeringer;
+
+        try {
+            medarbejder = controller.getAlleMedarbejdere().stream()
+                    .filter(m -> m.getNavn().equals(valgt.navn))
+                    .findFirst()
+                    .orElse(null);
+
+            if (medarbejder == null) {
+                showAlert("Kunne ikke finde medarbejderen.");
+                return;
+            }
+
+            mineAllokeringer = controller.getAlleAllokeringer().stream()
+                    .filter(a -> a.getMedarbejdere().stream()
+                            .anyMatch(m -> m.getMedId() == medarbejder.getMedId()))
+                    .toList();
+
+            if (mineAllokeringer.isEmpty()) {
+                showAlert(medarbejder.getNavn() + " har ingen allokeringer at slette.");
+                return;
+            }
+
+        } catch (SQLException e) {
+            showAlert("Fejl: " + e.getMessage());
+            return;
+        }
+
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Slet Allokering");
+        dialog.setHeaderText("Slet allokering for: " + medarbejder.getNavn());
+
+        ButtonType btnSlet = new ButtonType("Slet", ButtonBar.ButtonData.OK_DONE);
+        ButtonType btnAnnuller = new ButtonType("Annuller", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialog.getDialogPane().getButtonTypes().addAll(btnSlet, btnAnnuller);
+
+        dialog.getDialogPane().lookupButton(btnSlet)
+                .setStyle("-fx-background-color: #e53935; -fx-text-fill: white;");
+
+        GridPane form = new GridPane();
+        form.setHgap(10);
+        form.setVgap(10);
+        form.setPadding(new Insets(20));
+
+        ComboBox<Allokering> cbAllokering = new ComboBox<>();
+        cbAllokering.getItems().addAll(mineAllokeringer);
+        cbAllokering.setValue(mineAllokeringer.getFirst());
+        cbAllokering.setMaxWidth(Double.MAX_VALUE);
+
+        Label lblProjekt = new Label();
+        Label lblPeriode = new Label();
+        Label lblAndel   = new Label();
+
+        Runnable opdaterPreview = () -> {
+            Allokering a = cbAllokering.getValue();
+            if (a == null) return;
+            lblProjekt.setText(a.getProjekt() != null ? a.getProjekt().getNavn() : "-");
+            lblPeriode.setText(a.getStartPeriode() + " → " + a.getSlutPeriode());
+            lblAndel.setText(String.valueOf(a.getAndel()));
+        };
+
+        opdaterPreview.run();
+        cbAllokering.setOnAction(e -> opdaterPreview.run());
+
+        form.add(new Label("Allokering:"), 0, 0); form.add(cbAllokering, 1, 0);
+        form.add(new Label("Projekt:"),    0, 1); form.add(lblProjekt,   1, 1);
+        form.add(new Label("Periode:"),    0, 2); form.add(lblPeriode,   1, 2);
+        form.add(new Label("Andel:"),      0, 3); form.add(lblAndel,     1, 3);
+
+        dialog.getDialogPane().setContent(form);
+        dialog.getDialogPane().setPrefWidth(400);
+
+        Optional<ButtonType> result = dialog.showAndWait();
+        if (result.isEmpty() || result.get() != btnSlet) return;
+
+        try {
+            Allokering valgtAllokering = cbAllokering.getValue();
+
+            controller.deleteAllokering(valgtAllokering.getAllokeringsId());
+
+            loadData();
+
+        } catch (SQLException e) {
+            showAlert("Fejl ved sletning: " + e.getMessage());
+        }
+    }
+
+    // ==========================================
+    // BUILD TIMELINE
+    // ==========================================
+    private void showTimeLineWindow(Medarbejder medarbejder) {
+        Stage stage = new Stage();
+        stage.setTitle("Timeline - " + medarbejder.getNavn());
+
+        GridPane timelineGrid = new GridPane();
+        timelineGrid.setHgap(2);
+        timelineGrid.setVgap(2);
+
+        ScrollPane scrollPane = new ScrollPane(timelineGrid);
+        scrollPane.setPrefHeight(300);
+        scrollPane.setPrefWidth(800);
+
+        try {
+            buildTimeLine(medarbejder, timelineGrid, controller.getAlleAllokeringer());
+        } catch (SQLException e) {
+            showAlert("Fejl ved hentning af allokeringer: " + e.getMessage());
+            return;
+        }
+
+        stage.setScene(new Scene(scrollPane));
+        stage.show();
     }
 
     /*
@@ -613,12 +842,99 @@ public class Dashboard extends GridPane {
     |       HJÆLPEMETODER       |
     =============================
      */
-    private void showAlert(String besked) {
-        Alert alert = new Alert(Alert.AlertType.WARNING);
-        alert.setTitle("Advarsel");
-        alert.setHeaderText(null);
-        alert.setContentText(besked);
-        alert.showAndWait();
+
+    private void buildTimeLine(Medarbejder medarbejder, GridPane timelineGrid, List<Allokering> allokeringer) {
+        timelineGrid.getChildren().clear();
+
+        List<Allokering> relevant = allokeringer.stream()
+                .filter(a -> a.getMedarbejdere().stream()
+                        .anyMatch(m -> m.getMedId() == medarbejder.getMedId()))
+                .toList();
+
+        if (relevant.isEmpty()) {
+            timelineGrid.add(new Label("Ingen allokeringer fundet."), 0, 0);
+            return;
+        }
+
+        YearMonth min = null, max = null;
+        for (Allokering a : relevant) {
+            if (a.getStartPeriode() == null || a.getSlutPeriode() == null) continue;
+            if (min == null || a.getStartPeriode().isBefore(min)) min = a.getStartPeriode();
+            if (max == null || a.getSlutPeriode().isAfter(max)) max = a.getSlutPeriode();
+        }
+        if (min == null) return;
+
+        YearMonth current = min;
+        int col = 1, lastYear = -1, lastQuarter = -1;
+        while (!current.isAfter(max)) {
+            int year = current.getYear();
+            int quarter = ((current.getMonthValue() - 1) / 3) + 1;
+
+            if (year != lastYear) {
+                Label lbl = new Label(String.valueOf(year));
+                lbl.setMinSize(80, 25); lbl.setAlignment(Pos.CENTER);
+                lbl.setStyle("-fx-font-weight: bold; -fx-border-color: black; -fx-background-color: #dddddd;");
+                timelineGrid.add(lbl, col, 0);
+                lastYear = year; quarter = -1;
+            }
+
+            if (quarter != lastQuarter) {
+                Label lbl = new Label("Q" + quarter);
+                lbl.setMinSize(80, 25); lbl.setAlignment(Pos.CENTER);
+                lbl.setStyle("-fx-font-weight: bold; -fx-background-color: gray; -fx-background-color: #eeeeee");
+                timelineGrid.add(lbl, col, 1);
+                lastQuarter = quarter;
+            }
+            Label lbl = new Label(current.getMonth().name().substring(0, 3));
+            lbl.setMinSize(80, 25); lbl.setAlignment(Pos.CENTER);
+            lbl.setStyle("-fx-border-color: lightgray;");
+            timelineGrid.add(lbl, col, 2);
+
+            current = current.plusMonths(1);
+            col++;
+        }
+
+        int row = 3;
+        List<Projekt> projekter = relevant.stream()
+                .map(Allokering::getProjekt).filter(Objects::nonNull)
+                .collect(Collectors.toMap(
+                        Projekt::getProjektId, p -> p, (a, b) -> a))
+                .values().stream().toList();
+
+        for (Projekt projekt : projekter) {
+            Label projektLabel = new Label(projekt.getNavn());
+            projektLabel.setMinSize(120, 30);
+            projektLabel.setStyle("-fx-font-weight: bold; -fx-border-color: black;");
+            timelineGrid.add(projektLabel, 0, row);
+
+            List<Allokering> projektAllokeringer = relevant.stream()
+                    .filter(a -> a.getProjekt() != null
+                    && a.getProjekt().getProjektId() == projekt.getProjektId())
+                    .toList();
+
+            current = min; col = 1;
+            while (!current.isAfter(max)) {
+                final YearMonth cm = current;
+                Label cell = new Label();
+                cell.setMinSize(80, 30);
+                cell.setAlignment(Pos.CENTER);
+
+                projektAllokeringer.stream()
+                        .filter(a -> a.getStartPeriode() != null && a.getSlutPeriode() != null
+                        && !cm.isBefore(a.getStartPeriode()) && !cm.isAfter(a.getSlutPeriode()))
+                        .findFirst()
+                        .ifPresentOrElse(
+                                a -> { cell.setText(String.valueOf(a.getAndel()));
+                                cell.setStyle("-fx-background-color: #dee2e6; -fx-border-color: black;") ;},
+                                () -> cell.setStyle("-fx-border-color: lightgray;")
+                        );
+
+                timelineGrid.add(cell, col, row);
+                current = current.plusMonths(1);
+                col++;
+            }
+            row++;
+        }
     }
 
     private int næsteAllokeringsId() throws SQLException {
@@ -627,6 +943,14 @@ public class Dashboard extends GridPane {
                 .mapToInt(Allokering::getAllokeringsId)
                 .max()
                 .orElse(0) + 1;
+    }
+
+    private void showAlert(String besked) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Advarsel");
+        alert.setHeaderText(null);
+        alert.setContentText(besked);
+        alert.showAndWait();
     }
 
 }

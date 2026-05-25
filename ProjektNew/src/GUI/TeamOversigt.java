@@ -3,11 +3,8 @@ package GUI;
 
 import Controller.Controller;
 import Model.*;
-import Model.Enum.MedarbejderType;
-import com.sun.javafx.font.freetype.HBGlyphLayout;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -160,12 +157,12 @@ public class TeamOversigt extends BorderPane {
         // ==========================================
         // BUTTON BOTTOM LEFT
         // ==========================================
-        btnTilføjMedarbejder = new Button("Tilføj medarbejder");
-        btnFjernMedarbejder  = new Button("Fjern medarbejder");
+        btnTilføjMedarbejder = new Button("Tilføj Medarbejder");
+        btnFjernMedarbejder  = new Button("Fjern Medarbejder");
         btnTilføjTeam        = new Button("Tilføj Team");
         btnOpdaterTeam       = new Button("Opdater Team");
-        btnSletTeam          = new Button("Slet");
-        btnOpdater           = new Button("Opdater");
+        btnSletTeam          = new Button("Slet Team");
+        btnOpdater           = new Button("Opdater Tabel");
 
         HBox bottomBox = new HBox(10, btnTilføjMedarbejder, btnFjernMedarbejder,
                 btnTilføjTeam, btnOpdaterTeam, btnSletTeam, btnOpdater);

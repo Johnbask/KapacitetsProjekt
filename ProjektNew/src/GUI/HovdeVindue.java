@@ -141,7 +141,7 @@ public class HovdeVindue extends Application {
         // Dashboard
         tabDashboard.setOnSelectionChanged(e -> {
             if (tabDashboard.isSelected()) {
-                dashboardPane.initContent();
+                dashboardPane.loadData();
             }
         });
 
