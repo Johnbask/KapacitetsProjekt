@@ -2,6 +2,7 @@ package Storage;
 
 import Model.Enum.ØkonomiType;
 import Model.Medarbejder;
+import Model.Projekt;
 import Model.RessourceBehov;
 
 import java.sql.Connection;
@@ -135,7 +136,7 @@ public class DBRessourceBehov extends Storage<RessourceBehov> {
 
     private RessourceBehov helperMethod(ResultSet rs) throws SQLException {
 
-        return new RessourceBehov(
+        RessourceBehov rb = new RessourceBehov(
                 rs.getInt("behovId"),
                 rs.getString("rolle"),
                 YearMonth.parse(rs.getString("startPeriode")),
@@ -144,5 +145,10 @@ public class DBRessourceBehov extends Storage<RessourceBehov> {
                 rs.getDouble("timePris"),
                 ØkonomiType.valueOf(rs.getString("økonomiType"))
         );
+
+        // Sæt midlertidigt Projekt med kun id — bruges til matching i HovdeVindue
+        rb.setProjekt(new Projekt(rs.getInt("projektId"), null));
+
+        return rb;
     }
 }
