@@ -13,6 +13,7 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 
 public class DBRessourceBehov extends Storage<RessourceBehov> {
+    private final DBProjekt dbProjekt = new DBProjekt();
 
     @Override
     public void insert(RessourceBehov rb) throws SQLException {

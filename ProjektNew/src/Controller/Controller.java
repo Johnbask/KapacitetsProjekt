@@ -331,17 +331,17 @@ public class Controller {
                                        int medId, int projektId, int behovId) throws SQLException {
         Medarbejder medarbejder = dbMedarbejder.readById(medId);
         Projekt projekt = dbProjekt.readById(projektId);
-        RessourceBehov ressourceBehov = dbRessourceBehov.readById(behovId);
+        RessourceBehov ressourceBehov = behovId > 0 ? dbRessourceBehov.readById(behovId) : null;
 
-        if (medarbejder == null || projekt == null || ressourceBehov == null) {
-            System.out.println("Fejl: Medarbejder, Projekt eller RessourceBehov ikke fundet - Allokering ikke oprettet.");
+        if (medarbejder == null || projekt == null) {
+            System.out.println("Fejl: Medarbejder, Projekt ikke fundet - Allokering ikke oprettet.");
             return null;
         }
 
         Allokering allokering = new Allokering(allokeringsId, startPeriode, slutPeriode, andel);
         allokering.addMedarbejder(medarbejder);
         allokering.setProjekt(projekt);
-        allokering.setRessourceBehov(ressourceBehov);
+        if (ressourceBehov != null) allokering.setRessourceBehov(ressourceBehov);
 
         dbAllokering.insert(allokering);
 
@@ -360,17 +360,17 @@ public class Controller {
                                  int nyMedId, int nyProjektId, int nyBehovId) throws SQLException {
         Medarbejder medarbejder = dbMedarbejder.readById(nyMedId);
         Projekt projekt = dbProjekt.readById(nyProjektId);
-        RessourceBehov behov = dbRessourceBehov.readById(nyBehovId);
+        RessourceBehov ressourceBehov = nyBehovId > 0 ? dbRessourceBehov.readById(nyBehovId) : null;
 
-        if (medarbejder == null || projekt == null || behov == null) {
-            System.out.println("Fejl: Medarbejder eller Projekt eller Ressource behov ikke fundet - Allokering blev ikke opdateret");
+        if (medarbejder == null || projekt == null) {
+            System.out.println("Fejl: Medarbejder, Projekt ikke fundet - Allokering ikke oprettet.");
             return;
         }
 
         Allokering allokering = new Allokering(nyAllokeringsId, nyStartPeriode, nySlutPeriode, nyAndel);
         allokering.addMedarbejder(medarbejder);
         allokering.setProjekt(projekt);
-        allokering.setRessourceBehov(behov);
+        if (ressourceBehov != null) allokering.setRessourceBehov(ressourceBehov);
 
         dbAllokering.update(allokering);
     }
