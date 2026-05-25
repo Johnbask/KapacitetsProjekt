@@ -944,6 +944,8 @@ public class MedarbejderOversigt extends GridPane {
      */
 
     private void showTimelineWindow(Medarbejder medarbejder) {
+        loadAllokering();
+
         Stage stage = new Stage();
         stage.setTitle("Timeline - " + medarbejder.getNavn());
 
