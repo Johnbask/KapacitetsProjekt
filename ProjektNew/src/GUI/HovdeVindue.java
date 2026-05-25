@@ -21,7 +21,7 @@ public class HovdeVindue extends Application {
     @Override
     public void start(Stage stage) {
 
-        stage.setTitle("Kapacitets Project");
+        stage.setTitle("Themis V_Pro");
 
         BorderPane pane = new BorderPane();
 

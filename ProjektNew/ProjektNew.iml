@@ -6,7 +6,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
           <root url="jar://$USER_HOME$/Downloads/sqljdbc4.jar!/" />
@@ -15,10 +15,10 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="openjfx.javafx.controls" level="application" />
-    <orderEntry type="library" name="jspecify" level="application" />
-    <orderEntry type="library" name="junit.jupiter.engine" level="application" />
-    <orderEntry type="library" name="mockito.core" level="application" />
+    <orderEntry type="library" exported="" name="openjfx.javafx.controls" level="application" />
+    <orderEntry type="library" exported="" name="jspecify" level="application" />
+    <orderEntry type="library" exported="" name="junit.jupiter.engine" level="application" />
+    <orderEntry type="library" exported="" name="mockito.core" level="application" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

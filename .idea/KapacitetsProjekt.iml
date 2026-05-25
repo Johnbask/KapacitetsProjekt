@@ -5,5 +5,8 @@
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" exported="" name="jspecify" level="application" />
+    <orderEntry type="library" exported="" scope="TEST" name="junit.jupiter.api" level="application" />
+    <orderEntry type="library" exported="" name="openjfx.javafx.controls" level="application" />
   </component>
 </module>
