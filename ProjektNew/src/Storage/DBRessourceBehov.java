@@ -147,9 +147,8 @@ public class DBRessourceBehov extends Storage<RessourceBehov> {
                 ØkonomiType.valueOf(rs.getString("økonomiType"))
         );
 
-        int projektId = rs.getInt("projektId");
-        Projekt projekt = dbProjekt.readById(projektId);
-        rb.setProjekt(projekt);
+        // Sæt midlertidigt Projekt med kun id — bruges til matching i HovdeVindue
+        rb.setProjekt(new Projekt(rs.getInt("projektId"), null));
 
         return rb;
     }

@@ -1,5 +1,7 @@
 package GUI;
 
+import Controller.Controller;
+import Model.Allokering;
 import Model.Projekt;
 import Model.RessourceBehov;
 import Model.Enum.ØkonomiType;
@@ -10,14 +12,16 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
+import java.sql.SQLException;
 import java.time.YearMonth;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class BehovOversigt extends BorderPane {
 
+    private final Controller controller = Controller.getInstance();
+
     private List<Projekt> projekter;
+    private List<Allokering> allokeringer = new ArrayList<>();
 
     private ListView<Projekt> lvwProjekter;
     private ListView<RessourceBehov> lvwBehov;
@@ -28,24 +32,32 @@ public class BehovOversigt extends BorderPane {
     private Button btnRediger;
     private Button btnSlet;
 
-    // Callback der kaldes når behov oprettes, redigeres eller slettes
     private Runnable onBehovChanged;
 
     public BehovOversigt() {
         initUI();
+        loadAllokeringer();
     }
 
     // =====================================================
-    // CALLBACK REGISTRERING
+    // CALLBACK
     // =====================================================
     public void setOnBehovChanged(Runnable callback) {
         this.onBehovChanged = callback;
     }
 
-    // Intern hjælpemetode — kalder callback hvis den er sat
     private void fireBehovChanged() {
-        if (onBehovChanged != null) {
-            onBehovChanged.run();
+        if (onBehovChanged != null) onBehovChanged.run();
+    }
+
+    // =====================================================
+    // LOAD ALLOKERINGER FRA DB
+    // =====================================================
+    private void loadAllokeringer() {
+        try {
+            allokeringer = controller.getAlleAllokeringer();
+        } catch (SQLException e) {
+            showAlert("Fejl ved hentning af allokeringer:\n" + e.getMessage());
         }
     }
 
@@ -57,7 +69,6 @@ public class BehovOversigt extends BorderPane {
         lvwProjekter = new ListView<>();
         lvwProjekter.setPrefWidth(200);
 
-        // Vis projektnavnet i listen
         lvwProjekter.setCellFactory(lv -> new ListCell<>() {
             @Override
             protected void updateItem(Projekt p, boolean empty) {
@@ -103,9 +114,9 @@ public class BehovOversigt extends BorderPane {
         // =========================
         // BUTTONS
         // =========================
-        btnOpret  = new Button("Opret");
+        btnOpret   = new Button("Opret");
         btnRediger = new Button("Rediger");
-        btnSlet   = new Button("Slet");
+        btnSlet    = new Button("Slet");
 
         HBox buttonBox = new HBox(6, btnOpret, btnRediger, btnSlet);
 
@@ -129,7 +140,7 @@ public class BehovOversigt extends BorderPane {
                 (obs, oldVal, newVal) -> {
                     if (newVal == null) return;
                     lvwBehov.getItems().setAll(newVal.getRessourceBehov());
-                    buildChart(newVal.getRessourceBehov());
+                    buildChart(newVal.getRessourceBehov(), newVal);
                 }
         );
 
@@ -145,11 +156,10 @@ public class BehovOversigt extends BorderPane {
         this.projekter = projekter;
         lvwProjekter.getItems().setAll(projekter);
 
-        // Hvis et projekt allerede er valgt, behold det valgte
         Projekt valgt = lvwProjekter.getSelectionModel().getSelectedItem();
         if (valgt != null) {
             lvwBehov.getItems().setAll(valgt.getRessourceBehov());
-            buildChart(valgt.getRessourceBehov());
+            buildChart(valgt.getRessourceBehov(), valgt);
         }
     }
 
@@ -166,21 +176,20 @@ public class BehovOversigt extends BorderPane {
         pane.setHgap(8);
         pane.setPadding(new Insets(10));
 
-        TextField tfRolle  = new TextField();
-        TextField tfStart  = new TextField();
-        TextField tfSlut   = new TextField();
-        TextField tfAndel  = new TextField();
+        TextField tfRolle = new TextField();
+        TextField tfStart = new TextField();
+        TextField tfSlut  = new TextField();
+        TextField tfAndel = new TextField();
 
-        pane.add(new Label("Rolle:"),            0, 0); pane.add(tfRolle,  1, 0);
-        pane.add(new Label("Start (YYYY-MM):"),  0, 1); pane.add(tfStart,  1, 1);
-        pane.add(new Label("Slut (YYYY-MM):"),   0, 2); pane.add(tfSlut,   1, 2);
-        pane.add(new Label("Andel:"),            0, 3); pane.add(tfAndel,  1, 3);
+        pane.add(new Label("Rolle:"),           0, 0); pane.add(tfRolle, 1, 0);
+        pane.add(new Label("Start (YYYY-MM):"), 0, 1); pane.add(tfStart, 1, 1);
+        pane.add(new Label("Slut (YYYY-MM):"),  0, 2); pane.add(tfSlut,  1, 2);
+        pane.add(new Label("Andel:"),           0, 3); pane.add(tfAndel, 1, 3);
 
         Button btnGem = new Button("Gem");
         pane.add(btnGem, 1, 4);
 
         btnGem.setOnAction(e -> {
-
             Projekt selected = lvwProjekter.getSelectionModel().getSelectedItem();
             if (selected == null) {
                 showAlert("Vælg et projekt først.");
@@ -199,14 +208,9 @@ public class BehovOversigt extends BorderPane {
                 );
 
                 selected.getRessourceBehov().add(rb);
-
-                // Opdater listview
                 lvwBehov.getItems().setAll(selected.getRessourceBehov());
-                buildChart(selected.getRessourceBehov());
-
-                // Fortæl ProjektOversigt at den skal opdatere sin tidslinje
+                buildChart(selected.getRessourceBehov(), selected);
                 fireBehovChanged();
-
                 stage.close();
 
             } catch (Exception ex) {
@@ -236,15 +240,15 @@ public class BehovOversigt extends BorderPane {
         pane.setHgap(8);
         pane.setPadding(new Insets(10));
 
-        TextField tfRolle  = new TextField(selected.getRolle());
-        TextField tfStart  = new TextField(selected.getStartPeriode().toString());
-        TextField tfSlut   = new TextField(selected.getSlutPeriode().toString());
-        TextField tfAndel  = new TextField(String.valueOf(selected.getAndel()));
+        TextField tfRolle = new TextField(selected.getRolle());
+        TextField tfStart = new TextField(selected.getStartPeriode().toString());
+        TextField tfSlut  = new TextField(selected.getSlutPeriode().toString());
+        TextField tfAndel = new TextField(String.valueOf(selected.getAndel()));
 
-        pane.add(new Label("Rolle:"),  0, 0); pane.add(tfRolle,  1, 0);
-        pane.add(new Label("Start:"),  0, 1); pane.add(tfStart,  1, 1);
-        pane.add(new Label("Slut:"),   0, 2); pane.add(tfSlut,   1, 2);
-        pane.add(new Label("Andel:"),  0, 3); pane.add(tfAndel,  1, 3);
+        pane.add(new Label("Rolle:"), 0, 0); pane.add(tfRolle, 1, 0);
+        pane.add(new Label("Start:"), 0, 1); pane.add(tfStart, 1, 1);
+        pane.add(new Label("Slut:"),  0, 2); pane.add(tfSlut,  1, 2);
+        pane.add(new Label("Andel:"), 0, 3); pane.add(tfAndel, 1, 3);
 
         Button btnGem = new Button("Gem");
         pane.add(btnGem, 1, 4);
@@ -257,11 +261,8 @@ public class BehovOversigt extends BorderPane {
                 selected.setAndel(Double.parseDouble(tfAndel.getText()));
 
                 lvwBehov.refresh();
-                buildChart(selectedProjekt.getRessourceBehov());
-
-                // Fortæl ProjektOversigt at den skal opdatere sin tidslinje
+                buildChart(selectedProjekt.getRessourceBehov(), selectedProjekt);
                 fireBehovChanged();
-
                 stage.close();
 
             } catch (Exception ex) {
@@ -284,48 +285,91 @@ public class BehovOversigt extends BorderPane {
         if (selectedProjekt == null || selected == null) return;
 
         selectedProjekt.getRessourceBehov().remove(selected);
-
         lvwBehov.getItems().setAll(selectedProjekt.getRessourceBehov());
-        buildChart(selectedProjekt.getRessourceBehov());
-
+        buildChart(selectedProjekt.getRessourceBehov(), selectedProjekt);
         fireBehovChanged();
     }
 
     // =========================
     // CHART
     // =========================
-    private void buildChart(List<RessourceBehov> behovListe) {
+    private void buildChart(List<RessourceBehov> behovListe, Projekt projekt) {
 
         barChart.getData().clear();
 
         if (behovListe == null || behovListe.isEmpty()) return;
 
-        XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.setName("Behov");
+        // -------------------------------------------------------
+        // SERIES 1: Ressourcebehov (blå)
+        // -------------------------------------------------------
+        XYChart.Series<String, Number> behovSeries = new XYChart.Series<>();
+        behovSeries.setName("Behov");
 
-        // Saml alle (YearMonth, andel) par så vi kan sortere dem
-        List<Map.Entry<YearMonth, Double>> punkter = new ArrayList<>();
+        // -------------------------------------------------------
+        // SERIES 2: Allokeret — grøn hvis mødt, rød hvis ikke
+        // -------------------------------------------------------
+        XYChart.Series<String, Number> allokeretSeries = new XYChart.Series<>();
+        allokeretSeries.setName("Allokeret");
 
-        for (RessourceBehov b : behovListe) {
-            YearMonth current = b.getStartPeriode();
-            YearMonth slut    = b.getSlutPeriode();
+        // Saml behov per måned (sorteret)
+        List<Map.Entry<YearMonth, Double>> behovPunkter = new ArrayList<>();
 
-            while (!current.isAfter(slut)) {
-                punkter.add(Map.entry(current, Math.ceil(b.getAndel())));
+        for (RessourceBehov rb : behovListe) {
+            YearMonth current = rb.getStartPeriode();
+            while (!current.isAfter(rb.getSlutPeriode())) {
+                behovPunkter.add(Map.entry(current, rb.getAndel()));
                 current = current.plusMonths(1);
             }
         }
 
+        behovPunkter.sort(Map.Entry.comparingByKey());
 
-        punkter.sort(Map.Entry.comparingByKey());
+        // Beregn allokeret andel per måned for dette projekt
+        for (Map.Entry<YearMonth, Double> punkt : behovPunkter) {
 
-        for (Map.Entry<YearMonth, Double> punkt : punkter) {
-            String label = punkt.getKey().getMonth().name().substring(0, 3)
-                    + " " + punkt.getKey().getYear();
-            series.getData().add(new XYChart.Data<>(label, punkt.getValue()));
+            YearMonth måned = punkt.getKey();
+            double behov    = punkt.getValue();
+
+            String label = måned.getMonth().name().substring(0, 3) + " " + måned.getYear();
+
+            // Behov søjle
+            behovSeries.getData().add(new XYChart.Data<>(label, behov));
+
+            // Beregn samlet allokeret andel for denne måned og projekt
+            double allokeret = 0;
+            for (Allokering a : allokeringer) {
+                if (a.getProjekt() != null && a.getProjekt().getProjektId() == projekt.getProjektId()) {
+                    if (!måned.isBefore(a.getStartPeriode()) && !måned.isAfter(a.getSlutPeriode())) {
+                        allokeret += a.getAndel();
+                    }
+                }
+            }
+
+
+            XYChart.Data<String, Number> data = new XYChart.Data<>(label, allokeret);
+            allokeretSeries.getData().add(data);
+
+
+
+
+            data.nodeProperty().addListener((obs, oldNode, newNode) -> {
+                if (newNode != null) {
+                    newNode.setStyle("-fx-bar-fill: #222222;");
+                }
+            });
         }
 
-        barChart.getData().add(series);
+        barChart.getData().addAll(behovSeries, allokeretSeries);
+
+        javafx.application.Platform.runLater(() -> {
+            java.util.List<javafx.scene.Node> symbols = new java.util.ArrayList<>(
+                    barChart.lookupAll(".chart-legend-item-symbol")
+            );
+            // Kun den sidste (Allokeret) farves sort
+            if (symbols.size() >= 2) {
+                symbols.get(symbols.size() - 1).setStyle("-fx-background-color: #222222;");
+            }
+        });
     }
 
     private void showAlert(String besked) {

@@ -61,7 +61,7 @@ public class ProjektOversigt extends GridPane {
         btnRediger = new Button("Rediger Projekt");
 
         buttonBox.getChildren().addAll(btnOpret, btnRediger);
-        this.add(buttonBox, 0, 0);
+        this.add(buttonBox, 0, 2);
 
         // ---------------- TIMELINE ----------------
         timelineGrid = new GridPane();
