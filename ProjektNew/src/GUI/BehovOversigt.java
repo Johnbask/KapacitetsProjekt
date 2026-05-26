@@ -39,9 +39,6 @@ public class BehovOversigt extends BorderPane {
         loadAllokeringer();
     }
 
-    // =====================================================
-    // CALLBACK
-    // =====================================================
     public void setOnBehovChanged(Runnable callback) {
         this.onBehovChanged = callback;
     }
@@ -50,9 +47,6 @@ public class BehovOversigt extends BorderPane {
         if (onBehovChanged != null) onBehovChanged.run();
     }
 
-    // =====================================================
-    // LOAD ALLOKERINGER FRA DB
-    // =====================================================
     private void loadAllokeringer() {
         try {
             allokeringer = controller.getAlleAllokeringer();
@@ -63,12 +57,8 @@ public class BehovOversigt extends BorderPane {
 
     private void initUI() {
 
-        // =========================
-        // LISTVIEWS
-        // =========================
         lvwProjekter = new ListView<>();
         lvwProjekter.setPrefWidth(200);
-
         lvwProjekter.setCellFactory(lv -> new ListCell<>() {
             @Override
             protected void updateItem(Projekt p, boolean empty) {
@@ -80,9 +70,6 @@ public class BehovOversigt extends BorderPane {
         lvwBehov = new ListView<>();
         lvwBehov.setPrefWidth(220);
 
-        // =========================
-        // CHART
-        // =========================
         CategoryAxis xAxis = new CategoryAxis();
         NumberAxis yAxis = new NumberAxis();
 
@@ -93,15 +80,11 @@ public class BehovOversigt extends BorderPane {
         barChart.setPrefHeight(450);
 
         lvwProjekter.sceneProperty().addListener((obs, oldScene, newScene) -> {
-            if (newScene != null) {
-                lvwProjekter.prefHeightProperty().bind(newScene.heightProperty().subtract(80));
-            }
+            if (newScene != null) lvwProjekter.prefHeightProperty().bind(newScene.heightProperty().subtract(80));
         });
 
         lvwBehov.sceneProperty().addListener((obs, oldScene, newScene) -> {
-            if (newScene != null) {
-                lvwBehov.prefHeightProperty().bind(newScene.heightProperty().subtract(120));
-            }
+            if (newScene != null) lvwBehov.prefHeightProperty().bind(newScene.heightProperty().subtract(120));
         });
 
         barChart.sceneProperty().addListener((obs, oldScene, newScene) -> {
@@ -111,9 +94,6 @@ public class BehovOversigt extends BorderPane {
             }
         });
 
-        // =========================
-        // BUTTONS
-        // =========================
         btnOpret   = new Button("Opret");
         btnRediger = new Button("Rediger");
         btnSlet    = new Button("Slet");
@@ -133,9 +113,6 @@ public class BehovOversigt extends BorderPane {
 
         setCenter(root);
 
-        // =========================
-        // EVENTS
-        // =========================
         lvwProjekter.getSelectionModel().selectedItemProperty().addListener(
                 (obs, oldVal, newVal) -> {
                     if (newVal == null) return;
@@ -149,9 +126,6 @@ public class BehovOversigt extends BorderPane {
         btnSlet.setOnAction(e -> deleteBehoev());
     }
 
-    // =========================
-    // SET DATA
-    // =========================
     public void setProjekter(List<Projekt> projekter) {
         this.projekter = projekter;
         lvwProjekter.getItems().setAll(projekter);
@@ -196,16 +170,43 @@ public class BehovOversigt extends BorderPane {
                 return;
             }
 
+            // Validering
+            if (tfRolle.getText().trim().isEmpty()) {
+                showAlert("Rolle må ikke være tom.");
+                return;
+            }
+
+            double andel;
+            try {
+                andel = Double.parseDouble(tfAndel.getText());
+            } catch (NumberFormatException ex) {
+                showAlert("Andel skal være et tal.");
+                return;
+            }
+
+            if (andel <= 0) {
+                showAlert("Andel skal være større end 0.");
+                return;
+            }
+
+            YearMonth start, slut;
+            try {
+                start = YearMonth.parse(tfStart.getText());
+                slut  = YearMonth.parse(tfSlut.getText());
+            } catch (Exception ex) {
+                showAlert("Datoer skal være i formatet YYYY-MM.");
+                return;
+            }
+
+            if (slut.isBefore(start)) {
+                showAlert("Slutperiode må ikke være før startperiode.");
+                return;
+            }
+
             try {
                 RessourceBehov rb = controller.createRessourceBehov(
-                        999,
-                        tfRolle.getText(),
-                        YearMonth.parse(tfStart.getText()),
-                        YearMonth.parse(tfSlut.getText()),
-                        Double.parseDouble(tfAndel.getText()),
-                        1000,
-                        ØkonomiType.CAPEX,
-                        selected.getProjektId()
+                        999, tfRolle.getText(), start, slut, andel, 1000,
+                        ØkonomiType.CAPEX, selected.getProjektId()
                 );
 
                 if (rb != null) {
@@ -217,7 +218,7 @@ public class BehovOversigt extends BorderPane {
                 stage.close();
 
             } catch (Exception ex) {
-                showAlert("Ugyldig input: " + ex.getMessage());
+                showAlert("Fejl: " + ex.getMessage());
             }
         });
 
@@ -257,21 +258,51 @@ public class BehovOversigt extends BorderPane {
         pane.add(btnGem, 1, 4);
 
         btnGem.setOnAction(e -> {
+
+            // Validering
+            if (tfRolle.getText().trim().isEmpty()) {
+                showAlert("Rolle må ikke være tom.");
+                return;
+            }
+
+            double andel;
+            try {
+                andel = Double.parseDouble(tfAndel.getText());
+            } catch (NumberFormatException ex) {
+                showAlert("Andel skal være et tal.");
+                return;
+            }
+
+            if (andel <= 0) {
+                showAlert("Andel skal være større end 0.");
+                return;
+            }
+
+            YearMonth start, slut;
+            try {
+                start = YearMonth.parse(tfStart.getText());
+                slut  = YearMonth.parse(tfSlut.getText());
+            } catch (Exception ex) {
+                showAlert("Datoer skal være i formatet YYYY-MM.");
+                return;
+            }
+
+            if (slut.isBefore(start)) {
+                showAlert("Slutperiode må ikke være før startperiode.");
+                return;
+            }
+
             try {
                 selected.setRolle(tfRolle.getText());
-                selected.setStartPeriode(YearMonth.parse(tfStart.getText()));
-                selected.setSlutPeriode(YearMonth.parse(tfSlut.getText()));
-                selected.setAndel(Double.parseDouble(tfAndel.getText()));
+                selected.setStartPeriode(start);
+                selected.setSlutPeriode(slut);
+                selected.setAndel(andel);
 
                 controller.updateRessourceBehov(
-                        selected.getBehovId(),
-                        selected.getRolle(),
-                        selected.getStartPeriode(),
-                        selected.getSlutPeriode(),
-                        selected.getAndel(),
-                        selected.getTimePris(),
-                        selected.getØkonomiType(),
-                        selectedProjekt.getProjektId()
+                        selected.getBehovId(), selected.getRolle(),
+                        selected.getStartPeriode(), selected.getSlutPeriode(),
+                        selected.getAndel(), selected.getTimePris(),
+                        selected.getØkonomiType(), selectedProjekt.getProjektId()
                 );
 
                 lvwBehov.refresh();
@@ -280,7 +311,7 @@ public class BehovOversigt extends BorderPane {
                 stage.close();
 
             } catch (Exception ex) {
-                showAlert("Ugyldig input: " + ex.getMessage());
+                showAlert("Fejl: " + ex.getMessage());
             }
         });
 
@@ -298,11 +329,18 @@ public class BehovOversigt extends BorderPane {
 
         if (selectedProjekt == null || selected == null) return;
 
+        Alert confirm = new Alert(Alert.AlertType.WARNING);
+        confirm.setTitle("Bekræft sletning");
+        confirm.setHeaderText("Er du sikker?");
+        confirm.setContentText("Vil du slette behovet: " + selected.getRolle() + "?");
+
+        Optional<ButtonType> resultat = confirm.showAndWait();
+        if (resultat.isEmpty() || resultat.get() != ButtonType.OK) return;
+
         try {
             controller.deleteRessourceBehov(selected.getBehovId());
         } catch (SQLException e) {
             showAlert("Fejl ved sletning: " + e.getMessage());
-            e.printStackTrace();
             return;
         }
 
@@ -321,19 +359,12 @@ public class BehovOversigt extends BorderPane {
 
         if (behovListe == null || behovListe.isEmpty()) return;
 
-        // -------------------------------------------------------
-        // SERIES 1: Ressourcebehov (blå)
-        // -------------------------------------------------------
         XYChart.Series<String, Number> behovSeries = new XYChart.Series<>();
         behovSeries.setName("Behov");
 
-        // -------------------------------------------------------
-        // SERIES 2: Allokeret — grøn hvis mødt, rød hvis ikke
-        // -------------------------------------------------------
         XYChart.Series<String, Number> allokeretSeries = new XYChart.Series<>();
         allokeretSeries.setName("Allokeret");
 
-        // Saml behov per måned (sorteret)
         List<Map.Entry<YearMonth, Double>> behovPunkter = new ArrayList<>();
 
         for (RessourceBehov rb : behovListe) {
@@ -346,18 +377,14 @@ public class BehovOversigt extends BorderPane {
 
         behovPunkter.sort(Map.Entry.comparingByKey());
 
-        // Beregn allokeret andel per måned for dette projekt
         for (Map.Entry<YearMonth, Double> punkt : behovPunkter) {
 
             YearMonth måned = punkt.getKey();
             double behov    = punkt.getValue();
+            String label    = måned.getMonth().name().substring(0, 3) + " " + måned.getYear();
 
-            String label = måned.getMonth().name().substring(0, 3) + " " + måned.getYear();
-
-            // Behov søjle
             behovSeries.getData().add(new XYChart.Data<>(label, behov));
 
-            // Beregn samlet allokeret andel for denne måned og projekt
             double allokeret = 0;
             for (Allokering a : allokeringer) {
                 if (a.getProjekt() != null && a.getProjekt().getProjektId() == projekt.getProjektId()) {
@@ -367,17 +394,11 @@ public class BehovOversigt extends BorderPane {
                 }
             }
 
-
             XYChart.Data<String, Number> data = new XYChart.Data<>(label, allokeret);
             allokeretSeries.getData().add(data);
 
-
-
-
             data.nodeProperty().addListener((obs, oldNode, newNode) -> {
-                if (newNode != null) {
-                    newNode.setStyle("-fx-bar-fill: #222222;");
-                }
+                if (newNode != null) newNode.setStyle("-fx-bar-fill: #222222;");
             });
         }
 
@@ -387,7 +408,6 @@ public class BehovOversigt extends BorderPane {
             java.util.List<javafx.scene.Node> symbols = new java.util.ArrayList<>(
                     barChart.lookupAll(".chart-legend-item-symbol")
             );
-            // Kun den sidste (Allokeret) farves sort
             if (symbols.size() >= 2) {
                 symbols.get(symbols.size() - 1).setStyle("-fx-background-color: #222222;");
             }
