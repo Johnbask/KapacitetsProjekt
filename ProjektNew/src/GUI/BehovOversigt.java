@@ -365,17 +365,18 @@ public class BehovOversigt extends BorderPane {
         XYChart.Series<String, Number> allokeretSeries = new XYChart.Series<>();
         allokeretSeries.setName("Allokeret");
 
-        List<Map.Entry<YearMonth, Double>> behovPunkter = new ArrayList<>();
+        // Akkumuler andel per måned
+        Map<YearMonth, Double> behovMap = new TreeMap<>();
 
         for (RessourceBehov rb : behovListe) {
             YearMonth current = rb.getStartPeriode();
             while (!current.isAfter(rb.getSlutPeriode())) {
-                behovPunkter.add(Map.entry(current, rb.getAndel()));
+                behovMap.merge(current, rb.getAndel(), Double::sum);
                 current = current.plusMonths(1);
             }
         }
 
-        behovPunkter.sort(Map.Entry.comparingByKey());
+        List<Map.Entry<YearMonth, Double>> behovPunkter = new ArrayList<>(behovMap.entrySet());
 
         for (Map.Entry<YearMonth, Double> punkt : behovPunkter) {
 
