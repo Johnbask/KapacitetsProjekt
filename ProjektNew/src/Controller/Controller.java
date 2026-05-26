@@ -146,12 +146,20 @@ public class Controller {
     */
 
     public Medarbejder createMedarbejder(int medId, String initialer, String navn, MedarbejderType type,
-                                  String stilling, boolean fratrådt, String afdNavn, String orgNavn, String teamNavn) throws SQLException {
-        Afdeling afdeling = dbAfdeling.readByName(afdNavn);
-        Organisation organisation = dbOrganisation.readByName(orgNavn);
-        Team team = dbTeam.readByName(teamNavn);
+                                  String stilling, boolean fratrådt, Afdeling afdeling, Organisation organisation, Team team) throws SQLException {
 
         Medarbejder medarbejder = new Medarbejder(medId, initialer, navn, type, stilling, fratrådt, afdeling, organisation, team);
+
+        if (team != null) {
+            if (team.getMedarbejdere() == null) {
+                team.setMedarbejdere(new ArrayList<>());
+            }
+
+            if (!team.getMedarbejdere().contains(medarbejder)) {
+                team.getMedarbejdere().add(medarbejder);
+            }
+        }
+
         dbMedarbejder.insert(medarbejder);
         return medarbejder;
     }

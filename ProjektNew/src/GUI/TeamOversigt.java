@@ -486,7 +486,7 @@ public class TeamOversigt extends BorderPane {
 
         TextField txfTeamNavn = new TextField(team.getNavn());
 
-        pane.add(new Label("Team Navn"), 0, 1); pane.add(txfTeamNavn, 1, 0);
+        pane.add(new Label("Team Navn:"), 0, 0); pane.add(txfTeamNavn, 1, 0);
 
         Button btnGem = new Button("Gem");
         Button btnLuk = new Button("Luk");
@@ -511,7 +511,7 @@ public class TeamOversigt extends BorderPane {
 
         btnLuk.setOnAction(e -> stage.close());
 
-        Scene scene = new Scene(pane, 250, 150);
+        Scene scene = new Scene(pane, 350, 150);
         stage.setScene(scene);
         stage.showAndWait();
     }

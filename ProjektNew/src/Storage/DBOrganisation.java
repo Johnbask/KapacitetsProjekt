@@ -45,12 +45,6 @@ public class DBOrganisation extends Storage<Organisation> {
              PreparedStatement pstmt = minConnection.prepareStatement(query);
              ResultSet rs = pstmt.executeQuery()) {
 
-            while (rs.next()) {
-                Organisation o = helperMethod(rs);
-                System.out.println("Hentet organisation: " + o.getOrgId() + " - " + o.getNavn());
-                organisationer.add(o);
-            }
-
         } catch (SQLException e) {
             handleSQLException(e);
         } catch (Exception e) {

@@ -354,6 +354,7 @@ public class Dashboard extends GridPane {
         Button btnUpdate = new Button("Rediger Allokering");
         Button btnDelete = new Button("Slet Allokering");
         Button btnTimeLine = new Button("Åben Allokering");
+        Button btnSøgLedighed = new Button("Søg Ledighed");
 
         btnCreate.setOnAction(e -> createAllokering());
         btnUpdate.setOnAction(e -> updateAllokering());
@@ -378,9 +379,18 @@ public class Dashboard extends GridPane {
             }
         });
 
+        btnSøgLedighed.setOnAction(e -> {
+            try {
+                openLedighedWindow();
+            } catch (SQLException ex) {
+                showAlert("Fejl ved button søgLedighed: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+        });
+
         HBox hBox = new HBox(10);
         hBox.setPadding(new Insets(10, 0, 0, 0));
-        hBox.getChildren().addAll(btnCreate, btnUpdate, btnDelete, btnTimeLine);
+        hBox.getChildren().addAll(btnCreate, btnUpdate, btnDelete, btnTimeLine, btnSøgLedighed);
         return hBox;
     }
 
@@ -1073,6 +1083,375 @@ public class Dashboard extends GridPane {
 
         stage.setScene(new Scene(root, 520, 420));
         stage.showAndWait();
+    }
+
+        /*
+    =================================
+    |       SØG LEDIGHED WINDOW     |
+    =================================
+     */
+
+    private void openLedighedWindow() throws SQLException {
+        Stage stage = new Stage();
+        stage.setTitle("Søg Ledighed");
+        stage.setWidth(900);
+        stage.setHeight(700);
+
+        BorderPane root = new BorderPane();
+        root.setPadding(new Insets(10));
+
+        /*
+        =================================
+        |       TOP: SEARCH SECTION     |
+        =================================
+         */
+
+        VBox topBox = new VBox(10);
+        topBox.setPadding(new Insets(0, 0, 10, 0));
+
+        HBox searchBox = new HBox(10);
+        TextField txfSøg = new TextField();
+        txfSøg.setPromptText("Søg efter medarbejder navn...");
+        txfSøg.setPrefWidth(300);
+        Button btnSøg = new Button("Søg");
+        Button btnVisAlle = new Button("Vis alle");
+        searchBox.getChildren().addAll(new Label("Søg:"), txfSøg, btnSøg, btnVisAlle);
+
+        topBox.getChildren().add(searchBox);
+        root.setTop(topBox);
+
+        /*
+        =========================================================
+        |       CENTER: TABLEVIEW FOR LEDIGE MEDARBEJDERE       |
+        =========================================================
+         */
+
+        TableView<LedigMedarbejderRow> tvwLedige = new TableView<>();
+        tvwLedige.setPrefHeight(400);
+
+        TableColumn<LedigMedarbejderRow, String> colNavn = new TableColumn<>("Medarbejder");
+        colNavn.setCellValueFactory(new PropertyValueFactory<>("navn"));
+        colNavn.setPrefWidth(200);
+
+        TableColumn<LedigMedarbejderRow, String> colStilling = new TableColumn<>("Stilling");
+        colStilling.setCellValueFactory(new PropertyValueFactory<>("stilling"));
+        colStilling.setPrefWidth(200);
+
+        TableColumn<LedigMedarbejderRow, Double> colLedighed = new TableColumn<>("Ledighed");
+        colLedighed.setCellValueFactory(new PropertyValueFactory<>("ledighed"));
+        colLedighed.setPrefWidth(150);
+        colLedighed.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else if (item > 0.0) {
+                    setText(String.format("%.2f", item));
+                } else {
+                    setText(String.format("Ingen ledighed"));
+                }
+            }
+        });
+
+        tvwLedige.getColumns().addAll(colNavn, colStilling, colLedighed);
+        root.setCenter(tvwLedige);
+
+        /*
+        =====================================================
+        |       BUTTON: FORM FOR CREATING ALLOCATION        |
+        =====================================================
+         */
+        GridPane form = new GridPane();
+        form.setVgap(10);
+        form.setHgap(10);
+        form.setPadding(new Insets(10, 0, 0, 0));
+
+        // Projekt comboBox
+        ComboBox<Projekt> cbProjekt = new ComboBox<>();
+        cbProjekt.getItems().addAll(controller.getAlleProjekter());
+        cbProjekt.setPromptText("Vælg projekt");
+        cbProjekt.setPrefWidth(200);
+
+        // RessourceBehov ComboBox
+        ComboBox<RessourceBehov> cbBehov = new ComboBox<>();
+        cbBehov.setPromptText("Vælg ressource behov");
+        cbBehov.setPrefWidth(200);
+        cbBehov.setDisable(true);
+
+        // Update ressource behov når projekt er valgt
+        cbProjekt.setOnAction(e -> {
+            cbBehov.getItems().clear();
+            Projekt valgtProjekt = cbProjekt.getValue();
+            if (valgtProjekt != null) {
+                List<RessourceBehov> filtreret = null;
+                try {
+                    filtreret = controller.getAlleRessourceBehov().stream()
+                            .filter(rb -> rb.getProjekt() != null &&
+                                    rb.getProjekt().getProjektId() == valgtProjekt.getProjektId())
+                            .toList();
+                } catch (SQLException ex) {
+                    showAlert("Fejl ved valg af projekt: " + ex.getMessage());
+                    ex.printStackTrace();
+                    return;
+                }
+
+                cbBehov.getItems().addAll(filtreret);
+                cbBehov.setDisable(filtreret.isEmpty());
+                cbBehov.setPromptText(filtreret.isEmpty() ? "Ingen ressource behov" : "Vælg ressource behov");
+            }
+        });
+
+        // Start periode
+        TextField txfStart = new TextField();
+        txfStart.setPromptText("YYYY-MM");
+        txfStart.setPrefWidth(120);
+
+        // Slut periode
+        TextField txfSlut = new TextField();
+        txfSlut.setPromptText("YYYY-MM");
+        txfSlut.setPrefWidth(120);
+
+        // Andel
+        TextField txfAndel = new TextField();
+        txfAndel.setPrefWidth(100);
+
+        form.add(new Label("Projekt:"), 0, 0); form.add(cbProjekt, 1, 0);
+        form.add(new Label("Ressource Behov:"), 2, 0); form.add(cbBehov, 3, 0);
+        form.add(new Label("Start periode:"), 0, 1); form.add(txfStart, 1, 1);
+        form.add(new Label("Slut periode"), 2, 1); form.add(txfSlut, 3, 1);
+
+        form.add(new Label("Andel"), 0, 2); form.add(txfAndel, 1, 2);
+
+        // Buttons
+        Button btnTildel = new Button("Tildel Allokering");
+        Button btnLuk = new Button("Luk");
+        HBox buttonBox = new HBox(10, btnTildel, btnLuk);
+        buttonBox.setPadding(new Insets(10, 0, 0, 0));
+        form.add(buttonBox, 0, 3, 4, 1);
+
+        root.setBottom(form);
+
+        /*
+        =====================================
+        |       SEARCH FUNCTIONALITY        |
+        =====================================
+         */
+
+        Runnable søgLedigeMedarbejdere = () -> {
+            String søgeord = txfSøg.getText().trim();
+            YearMonth startPeriode = null;
+            YearMonth slutPeriode = null;
+
+            try {
+                if (!txfStart.getText().trim().isEmpty()) {
+                    startPeriode = YearMonth.parse(txfStart.getText().trim());
+                }
+                if (!txfSlut.getText().trim().isEmpty()) {
+                    slutPeriode = YearMonth.parse(txfSlut.getText().trim());
+                }
+            } catch (Exception ex) {
+                return;
+            }
+
+            List<Medarbejder> medarbejdere;
+            if (søgeord.isEmpty()) {
+                try {
+                    medarbejdere = controller.getAlleMedarbejdere();
+                } catch (SQLException e) {
+                    showAlert("Fejl ved hentning af medarbejder: " + e.getMessage());
+                    e.printStackTrace();
+                    return;
+                }
+            } else {
+                try {
+                    medarbejdere = controller.søgMedarbejderNavn(søgeord);
+                } catch (SQLException e) {
+                    showAlert("Fejl ved søgning af medarbejdere: " + e.getMessage());
+                    e.printStackTrace();
+                    return;
+                }
+                if (medarbejdere.isEmpty()) {
+                    showAlert("Ingen medarbejdere fundet med navn: " + søgeord);
+                    return;
+                }
+            }
+
+            List<LedigMedarbejderRow> ledigeRows = new ArrayList<>();
+
+            for (Medarbejder m : medarbejdere) {
+                double ledighed = 1.0;
+
+                if (startPeriode != null && slutPeriode != null) {
+                    double totalLedighed = 0;
+                    int måneder = 0;
+                    YearMonth current = startPeriode;
+                    while (!current.isAfter(slutPeriode)) {
+                        double månedLedighed = 0;
+                        try {
+                            månedLedighed = controller.getLedigAndel(m.getMedId(), current);
+                        } catch (SQLException e) {
+                            showAlert("Fejl ved visning af ledighed: " + e.getMessage());
+                            e.printStackTrace();
+                            return;
+                        }
+
+                        totalLedighed += månedLedighed;
+                        måneder++;
+                        current = current.plusMonths(1);
+                    }
+                    ledighed = måneder > 0 ? totalLedighed / måneder : 1.0;
+                } else if (startPeriode != null) {
+                    try {
+                        ledighed = controller.getLedigAndel(m.getMedId(), startPeriode);
+                    } catch (SQLException e) {
+                        showAlert("Fejl ved getLedigAndel startPeriode: " + e.getMessage());
+                    }
+                } else if (slutPeriode != null) {
+                    try {
+                        ledighed = controller.getLedigAndel(m.getMedId(), slutPeriode);
+                    } catch (SQLException e) {
+                        showAlert("Fejl ved getLedigAndel slutPeriode");
+                    }
+                }
+
+                if (ledighed > 0) {
+                    ledigeRows.add(new LedigMedarbejderRow(m.getNavn(), m.getStilling(), ledighed, m));
+                }
+            }
+
+            ledigeRows.sort((a, b) -> Double.compare(b.ledighed, a.ledighed));
+            tvwLedige.getItems().setAll(ledigeRows);
+        };
+
+        btnSøg.setOnAction(e -> søgLedigeMedarbejdere.run());
+        btnVisAlle.setOnAction(e -> {
+            txfSøg.clear();
+            søgLedigeMedarbejdere.run();
+        });
+
+        txfStart.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue.isEmpty() || newValue.matches("\\d{4}-\\d{2}")) {
+                søgLedigeMedarbejdere.run();
+            }
+        });
+        txfSlut.textProperty().addListener((observable, oldValue, newValue) ->  {
+            if (newValue.isEmpty() || newValue.matches("\\d{4}-\\d{2}")) {
+                søgLedigeMedarbejdere.run();
+            }
+        });
+
+        /*
+        =============================================
+        |       TILDEL ALLOKERING BUTTON ACTION     |
+        =============================================
+         */
+
+        btnTildel.setOnAction(e -> {
+            LedigMedarbejderRow selected = tvwLedige.getSelectionModel().getSelectedItem();
+            if (selected == null) {
+                showAlert("Vælg en medarbejder fra listen først.");
+                return;
+            }
+
+            Projekt valgtProjekt = cbProjekt.getValue();
+            if (valgtProjekt == null) {
+                showAlert("Vælg et projekt.");
+                return;
+            }
+
+            try {
+                YearMonth start = YearMonth.parse(txfStart.getText().trim());
+                YearMonth slut = YearMonth.parse(txfSlut.getText().trim());
+                double andel = Double.parseDouble(txfAndel.getText().trim());
+
+                if (slut.isBefore(start)) {
+                    showAlert("Slutperiode må ikke være før startperiode.");
+                    return;
+                }
+
+                if (andel <= 0 || andel > 1) {
+                    showAlert("Andel skal være mellem 0 og 1");
+                    return;
+                }
+
+                double ledighed = controller.getLedigAndel(selected.medarbejder.getMedId(), start);
+                if (ledighed < andel) {
+                    showAlert(String.format("%s har kun %.of%% ledighed i %s. Kan ikke allokere %.0f%%.", selected.navn, ledighed * 100, stage, andel * 100));
+                    return;
+                }
+
+                int næsteId = næsteAllokeringsId();
+                int behovId = cbBehov.getValue() != null ? cbBehov.getValue().getBehovId() : -1;
+
+                controller.createAllokering(
+                        næsteId,
+                        start,
+                        slut,
+                        andel,
+                        selected.medarbejder.getMedId(),
+                        valgtProjekt.getProjektId(),
+                        behovId
+                );
+
+                loadData();
+
+                søgLedigeMedarbejdere.run();
+
+                showAlert("Allokering oprettet for " + selected.navn);
+
+                txfStart.clear();
+                txfSlut.clear();
+                txfAndel.clear();
+                cbProjekt.setValue(null);
+                cbBehov.getItems().clear();
+                cbBehov.setDisable(true);
+
+            } catch (DateTimeParseException ex) {
+                showAlert("Ugyldig datoformat. Burg YYYY-MM");
+            } catch (NumberFormatException ex) {
+                showAlert("Andel skal være et tal, fx 0.5");
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+
+        btnLuk.setOnAction(e -> stage.close());
+
+        søgLedigeMedarbejdere.run();
+
+        stage.setScene(new Scene(root));
+        stage.showAndWait();
+    }
+
+    public static class LedigMedarbejderRow {
+        private final String navn;
+        private final String stilling;
+        private final Double ledighed;
+        private final Medarbejder medarbejder;
+
+        public LedigMedarbejderRow(String navn, String stilling, Double ledighed, Medarbejder medarbejder) {
+            this.navn = navn;
+            this.stilling = stilling;
+            this.ledighed = ledighed;
+            this.medarbejder = medarbejder;
+        }
+
+        public String getNavn() {
+            return navn;
+        }
+
+        public String getStilling() {
+            return stilling;
+        }
+
+        public Double getLedighed() {
+            return ledighed;
+        }
+
+        public Medarbejder getMedarbejder() {
+            return medarbejder;
+        }
     }
 
     /*

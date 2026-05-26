@@ -186,7 +186,14 @@ public class MedarbejderOversigt extends GridPane {
 
     private void initActions() {
 
-        btnOpret.setOnAction(e -> createMedarbejderWindow());
+        btnOpret.setOnAction(e -> {
+            try {
+                createMedarbejderWindow();
+            } catch (SQLException ex) {
+                showAlert("Fejl ved oprettelse af medarbejder: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+        });
 
         btnRediger.setOnAction(e -> {
             Medarbejder selected =
@@ -488,7 +495,7 @@ public class MedarbejderOversigt extends GridPane {
     // ==========================================
     // CREATE WINDOW
     // ==========================================
-    private void createMedarbejderWindow() {
+    private void createMedarbejderWindow() throws SQLException {
 
         Stage stage = new Stage();
         stage.setTitle("Opret Medarbejder");
@@ -501,40 +508,63 @@ public class MedarbejderOversigt extends GridPane {
         TextField txfInitialer = new TextField();
         TextField txfNavn = new TextField();
         TextField txfStilling = new TextField();
-        TextField txfAfdNavn = new TextField();
-        TextField txfOrgNavn = new TextField();
-        TextField txfTeamNavn = new TextField();
+
         ComboBox<MedarbejderType> cmbType = new ComboBox<>();
         cmbType.getItems().addAll(MedarbejderType.values());
 
-        pane.add(new Label("Initialer:"), 0, 0);
-        pane.add(txfInitialer, 1, 0);
+        ComboBox<Afdeling> cmbAfdeling = new ComboBox<>();
+        cmbAfdeling.getItems().addAll(controller.getAlleAfdelinger());
+        cmbAfdeling.setPromptText("Vælg Afdeling...");
+        cmbAfdeling.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(Afdeling a, boolean empty) {
+                super.updateItem(a, empty);
+                setText(empty || a == null ? null : a.getNavn() + " (" + a.getLeder() + ")");
+            }
+        });
+        cmbAfdeling.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(Afdeling a, boolean empty) {
+                super.updateItem(a, empty);
+                setText(empty || a == null ? null : a.getNavn() + " (" + a.getLeder() + ")");
+            }
+        });
 
-        pane.add(new Label("Navn:"), 0, 1);
-        pane.add(txfNavn, 1, 1);
+        ComboBox<Organisation> cmbOrganisation = new ComboBox<>();
+        cmbOrganisation.getItems().addAll(controller.getAlleOrganisationer());
+        cmbOrganisation.setPromptText("Vælg organisation...");
+        cmbOrganisation.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(Organisation o, boolean empty) {
+                super.updateItem(o, empty);
+                setText(empty || o == null ? null : o.getNavn());
+            }
+        });
+        cmbOrganisation.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(Organisation o, boolean empty) {
+                super.updateItem(o, empty);
+                setText(empty || o == null ? null : o.getNavn());
+            }
+        });
 
-        pane.add(new Label("Stilling:"), 0, 2);
-        pane.add(txfStilling, 1, 2);
-
-        pane.add(new Label("Type:"), 0, 3);
-        pane.add(cmbType, 1, 3);
-
-        pane.add(new Label("Afdeling navn/leder"), 0, 4);
-        pane.add(txfAfdNavn, 1, 4);
-
-        pane.add(new Label("Org. navn"), 0, 5);
-        pane.add(txfOrgNavn, 1, 5);
-
-        pane.add(new Label("Team navn"), 0, 6);
-        pane.add(txfTeamNavn, 1, 6);
+        pane.add(new Label("Initialer:"), 0, 0); pane.add(txfInitialer, 1, 0);
+        pane.add(new Label("Navn:"), 0, 1); pane.add(txfNavn, 1, 1);
+        pane.add(new Label("Stilling:"), 0, 2); pane.add(txfStilling, 1, 2);
+        pane.add(new Label("Type:"), 0, 3); pane.add(cmbType, 1, 3);
+        pane.add(new Label("Afdeling:"), 0, 4); pane.add(cmbAfdeling, 1, 4);
+        pane.add(new Label("Organisation:"), 0, 5); pane.add(cmbOrganisation, 1, 5);
 
         Button btnGem = new Button("Gem");
         Button btnCancel = new Button("Luk");
 
-        pane.add(btnGem, 0, 7);
-        pane.add(btnCancel, 1, 7);
+        pane.add(btnGem, 0, 7); pane.add(btnCancel, 1, 7);
 
         btnGem.setOnAction(e -> {
+            Afdeling valgAfd = cmbAfdeling.getValue();
+            Organisation valgOrg = cmbOrganisation.getValue();
+            Team valgTeam = null;
+
                 Medarbejder ny = null;
                 try {
                     ny = controller.createMedarbejder(
@@ -544,9 +574,9 @@ public class MedarbejderOversigt extends GridPane {
                             cmbType.getValue(),
                             txfStilling.getText(),
                             false,
-                            txfAfdNavn.getText(),
-                            txfOrgNavn.getText(),
-                            txfTeamNavn.getText()
+                            valgAfd,
+                            valgOrg,
+                            valgTeam
                     );
 
                     tvwMedarbejdere.getItems().add(ny);
