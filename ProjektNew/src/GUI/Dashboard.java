@@ -1,17 +1,15 @@
 package GUI;
 
 import Controller.Controller;
-import Model.Allokering;
+import Model.*;
 import Model.Enum.MedarbejderType;
-import Model.Medarbejder;
-import Model.Projekt;
-import Model.RessourceBehov;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
@@ -210,6 +208,24 @@ public class Dashboard extends GridPane {
                 this.add(ok, 0, 1, 3, 1);
             }
 
+            Button btnAfdelinger = new Button("Afdelinger");
+            Button btnOrganisationer = new Button("Organisationer");
+            btnAfdelinger.setOnAction(e -> {
+                try {
+                    afdelingWindow();
+                } catch (SQLException ex) {
+                    showAlert("Fejl: " + ex.getMessage());
+                }
+            });
+            btnOrganisationer.setOnAction(e -> {
+                try {
+                    organisationWindow();
+                } catch (SQLException ex) {
+                    showAlert("Fejl: " + ex.getMessage());
+                    ex.printStackTrace();
+                }
+            });
+
             /*
             =================================
             |       ROW 2 - Search bar      |
@@ -217,7 +233,14 @@ public class Dashboard extends GridPane {
             */
             HBox searchBox = new HBox(10, new Label("Søg:"), txfSøg, btnSøg, btnReset);
             searchBox.setAlignment(Pos.CENTER_LEFT);
-            this.add(searchBox, 0, 2, 3, 1);
+            HBox.setHgrow(searchBox, Priority.ALWAYS);
+
+            HBox afdOrgBtns = new HBox(10, btnAfdelinger, btnOrganisationer);
+            afdOrgBtns.setAlignment(Pos.CENTER_RIGHT);
+
+            HBox row2 = new HBox(20, searchBox, afdOrgBtns);
+            row2.setAlignment(Pos.CENTER_LEFT);
+            this.add(row2, 0, 2, 3, 1);
 
             /*
             =================================
@@ -815,6 +838,241 @@ public class Dashboard extends GridPane {
 
         stage.setScene(new Scene(scrollPane));
         stage.show();
+    }
+
+    /*
+    =============================
+    |       AFDELING WINDOW     |
+    =============================
+     */
+    private void afdelingWindow() throws SQLException {
+        Stage stage = new Stage();
+        stage.setTitle("Afdelinger");
+
+        BorderPane root = new BorderPane();
+        root.setPadding(new Insets(12));
+
+        TableView<Afdeling> tvwAfdeling = new TableView<>();
+        tvwAfdeling.setPrefSize(500, 280);
+
+        TableColumn<Afdeling, Integer> colId = new TableColumn<>("ID");
+        colId.setCellValueFactory(new PropertyValueFactory<>("afdId"));
+        colId.setPrefWidth(60);
+
+        TableColumn<Afdeling, String> colNavn = new TableColumn<>("Navn");
+        colNavn.setCellValueFactory(new PropertyValueFactory<>("navn"));
+        colNavn.setPrefWidth(200);
+
+        TableColumn<Afdeling, String> colLeder = new TableColumn<>("Leder");
+        colLeder.setCellValueFactory(new PropertyValueFactory<>("leder"));
+        colLeder.setPrefWidth(200);
+
+        tvwAfdeling.getColumns().addAll(colId, colNavn, colLeder);
+        tvwAfdeling.getItems().setAll(controller.getAlleAfdelinger());
+        root.setCenter(tvwAfdeling);
+
+        GridPane form = new GridPane();
+        form.setPadding(new Insets(10, 0, 6, 0));
+        form.setHgap(10);
+        form.setVgap(8);
+
+        TextField txfId = new TextField(); txfId.setPromptText("ID");
+        TextField txfNavn = new TextField(); txfNavn.setPromptText("Navn");
+        TextField txfLeder = new TextField(); txfLeder.setPromptText("Leder");
+
+        form.add(new Label("ID: "), 0, 0); form.add(txfId, 1, 0);
+        form.add(new Label("Navn:"), 0, 1); form.add(txfNavn, 1, 1);
+        form.add(new Label("Leder:"), 0, 2); form.add(txfLeder, 1, 2);
+
+        tvwAfdeling.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                txfId.setText(String.valueOf(newValue.getAfdId()));
+                txfNavn.setText(newValue.getNavn());
+                txfLeder.setText(newValue.getLeder());
+            }
+        });
+
+        Button btnCreate = new Button("Opret Afdeling");
+        Button btnEdit = new Button("Rediger Afdeling");
+        Button btnDelete = new Button("Slet Afdeling");
+
+        btnCreate.setOnAction(e -> {
+            try {
+                int id = Integer.parseInt(txfId.getText().trim());
+                Afdeling ny = controller.createAfdeling(id, txfNavn.getText().trim(), txfLeder.getText().trim());
+                tvwAfdeling.getItems().add(ny);
+                txfId.clear(); txfNavn.clear(); txfLeder.clear();
+            } catch (NumberFormatException ex) {
+                showAlert("ID skal være et heltal.");
+            } catch (SQLException ex) {
+                showAlert("Fejl: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+        });
+
+        btnEdit.setOnAction(e -> {
+            Afdeling valgt = tvwAfdeling.getSelectionModel().getSelectedItem();
+            if (valgt == null) {
+                showAlert("Vælg en afdeling først.");
+                return;
+            }
+            try {
+                int id = Integer.parseInt(txfId.getText().trim());
+                Afdeling ny = controller.updateAfdeling(id, txfNavn.getText().trim(), txfLeder.getText().trim());
+                tvwAfdeling.getItems().add(ny);
+                txfId.clear(); txfNavn.clear(); txfLeder.clear();
+            } catch (NumberFormatException ex) {
+                showAlert("ID skal være et heltal.");
+            } catch (SQLException ex) {
+                showAlert("Fejl: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+        });
+
+        btnDelete.setOnAction(e -> {
+            Afdeling valgt = tvwAfdeling.getSelectionModel().getSelectedItem();
+            if (valgt == null) {
+                showAlert("Vælg en afdeling først.");
+                return;
+            }
+            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "Slet '" + valgt.getNavn() + "'?", ButtonType.OK, ButtonType.CANCEL);
+            confirm.showAndWait().ifPresent(bt -> {
+                if (bt == ButtonType.OK) {
+                    try {
+                        controller.deleteAfdeling(valgt.getAfdId());
+                    } catch (SQLException ex) {
+                        showAlert("Fejl: " + ex.getMessage());
+                        ex.printStackTrace();
+                    }
+                    tvwAfdeling.getItems().remove(valgt);
+                    txfId.clear(); txfNavn.clear(); txfLeder.clear();
+                }
+            });
+        });
+
+        HBox hBox = new HBox(10, btnCreate, btnEdit, btnDelete);
+        hBox.setPadding(new Insets(6, 0, 0, 0));
+
+        VBox bottom = new VBox(4, form, hBox);
+        root.setBottom(bottom);
+
+        stage.setScene(new Scene(root, 540, 460));
+        stage.showAndWait();
+    }
+
+    /*
+    =================================
+    |       ORGANISATION WINDOW     |
+    =================================
+     */
+    private void organisationWindow() throws SQLException {
+        Stage stage = new Stage();
+        stage.setTitle("Organisationer");
+
+        BorderPane root = new BorderPane();
+        root.setPadding(new Insets(12));
+
+        TableView<Organisation> tvwOrganisation = new TableView<>();
+        tvwOrganisation.setPrefSize(500, 280);
+
+        TableColumn<Organisation, Integer> colId = new TableColumn<>("ID");
+        colId.setCellValueFactory(new PropertyValueFactory<>("orgId"));
+        colId.setPrefWidth(60);
+
+        TableColumn<Organisation, String> colNavn = new TableColumn<>("Navn");
+        colNavn.setCellValueFactory(new PropertyValueFactory<>("navn"));
+        colNavn.setPrefWidth(400);
+
+        tvwOrganisation.getColumns().addAll(colId, colNavn);
+        tvwOrganisation.getItems().setAll(controller.getAlleOrganisationer());
+        root.setCenter(tvwOrganisation);
+
+        GridPane form = new GridPane();
+        form.setPadding(new Insets(10, 0, 6, 0));
+        form.setHgap(10); form.setVgap(8);
+
+        TextField txfId = new TextField(); txfId.setPromptText("ID");
+        TextField txfNavn = new TextField(); txfNavn.setPromptText("Navn");
+
+        form.add(new Label("orgId:"), 0, 0); form.add(txfId, 1, 0);
+        form.add(new Label("Navn:"), 0, 1); form.add(txfNavn, 1, 1);
+
+        tvwOrganisation.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                txfId.setText(String.valueOf(newValue.getOrgId()));
+                txfNavn.setText(newValue.getNavn());
+            }
+        });
+
+        Button btnCreate = new Button("Opret Organisation");
+        Button btnEdit = new Button("Rediger Organisation");
+        Button btnDelete = new Button("Slet Organisation");
+
+        btnCreate.setOnAction(e -> {
+            try {
+                int id = Integer.parseInt(txfId.getText().trim());
+                Organisation ny = controller.createOrganisation(id, txfNavn.getText().trim());
+                tvwOrganisation.getItems().add(ny);
+                txfId.clear(); txfNavn.clear();
+            } catch (NumberFormatException ex) {
+                showAlert("ID skal være et heltal.");
+            } catch (SQLException ex) {
+                showAlert("Fejl: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+        });
+
+        btnEdit.setOnAction(e -> {
+            Organisation valgt = tvwOrganisation.getSelectionModel().getSelectedItem();
+            if (valgt == null) {
+                showAlert("Vælg en organisation først.");
+                return;
+            }
+
+            try {
+                int id = Integer.parseInt(txfId.getText().trim());
+                Organisation ny = controller.updateOrganisation(id, txfNavn.getText().trim());
+                tvwOrganisation.getItems().add(ny);
+                txfId.clear(); txfNavn.clear();
+            } catch (NumberFormatException ex) {
+                showAlert("ID skal være et heltal.");
+            } catch (SQLException ex) {
+                showAlert("Fejl: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+        });
+
+        btnDelete.setOnAction(e -> {
+            Organisation valgt = tvwOrganisation.getSelectionModel().getSelectedItem();
+            if (valgt == null) {
+                showAlert("Vælg en organisation først.");
+                return;
+            }
+            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "Slet '" + valgt.getNavn() + "'?", ButtonType.OK, ButtonType.CANCEL);
+            confirm.showAndWait().ifPresent(bt -> {
+                if (bt == ButtonType.OK) {
+                    try {
+                        controller.deleteOrganisation(valgt.getOrgId());
+                    } catch (SQLException ex) {
+                        showAlert("Fejl: " + ex.getMessage());
+                        ex.printStackTrace();
+                    }
+                    tvwOrganisation.getItems().remove(valgt);
+                    txfId.clear(); txfNavn.clear();
+                }
+            });
+
+
+        });
+
+        HBox btnBox = new HBox(10, btnCreate, btnEdit, btnDelete);
+        btnBox.setPadding(new Insets(6, 0, 0, 0));
+
+        VBox bottom = new VBox(4, form, btnBox);
+        root.setBottom(bottom);
+
+        stage.setScene(new Scene(root, 520, 420));
+        stage.showAndWait();
     }
 
     /*

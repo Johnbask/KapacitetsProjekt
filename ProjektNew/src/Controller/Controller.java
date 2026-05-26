@@ -61,9 +61,10 @@ public class Controller {
         return dbAfdeling.readByName(navn);
     }
 
-    public void updateAfdeling(int afdId, String nytNavn, String nyLeder) throws SQLException {
+    public Afdeling updateAfdeling(int afdId, String nytNavn, String nyLeder) throws SQLException {
         Afdeling afdeling = new Afdeling(afdId, nytNavn, nyLeder);
         dbAfdeling.update(afdeling);
+        return afdeling;
     }
 
     public void deleteAfdeling(int afdId) throws SQLException {
@@ -94,9 +95,10 @@ public class Controller {
         return dbOrganisation.readByName(navn);
     }
 
-    public void updateOrganisation(int orgId, String nyNavn) throws SQLException {
+    public Organisation updateOrganisation(int orgId, String nyNavn) throws SQLException {
         Organisation organisation = new Organisation(orgId, nyNavn);
         dbOrganisation.update(organisation);
+        return organisation;
     }
 
     public void deleteOrganisation(int orgId) throws SQLException {
