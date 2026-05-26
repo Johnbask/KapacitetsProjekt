@@ -1,5 +1,6 @@
 package GUI;
 
+import Controller.Controller;
 import Model.Projekt;
 import Model.RessourceBehov;
 import javafx.geometry.Insets;
@@ -10,17 +11,22 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
+import java.sql.SQLException;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public class ProjektOversigt extends GridPane {
+
+    private final Controller controller = Controller.getInstance();
 
     private GridPane timelineGrid;
     private ScrollPane scrollPane;
 
     private Button btnOpret;
     private Button btnRediger;
+    private Button btnSlet;
 
     private List<Projekt> projekter;
 
@@ -59,8 +65,9 @@ public class ProjektOversigt extends GridPane {
 
         btnOpret   = new Button("Opret Projekt");
         btnRediger = new Button("Rediger Projekt");
+        btnSlet = new Button("Slet Projekt");
 
-        buttonBox.getChildren().addAll(btnOpret, btnRediger);
+        buttonBox.getChildren().addAll(btnOpret, btnRediger, btnSlet);
         this.add(buttonBox, 0, 2);
 
         // ---------------- TIMELINE ----------------
@@ -87,6 +94,14 @@ public class ProjektOversigt extends GridPane {
     private void initActions() {
         btnOpret.setOnAction(e -> createProjektWindow());
         btnRediger.setOnAction(e -> editProjektWindow());
+        btnSlet.setOnAction(e -> {
+            try {
+                sletProjektAlert();
+            } catch (SQLException ex) {
+                showAlert("Fejl: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+        });
     }
 
     // =====================================================
@@ -248,7 +263,13 @@ public class ProjektOversigt extends GridPane {
                 return;
             }
 
-            Projekt nyt = new Projekt(id, navn);
+            Projekt nyt = null;
+            try {
+                nyt = controller.createProjekt(id, navn);
+            } catch (SQLException ex) {
+                showAlert("Fejl ved oprettelse af projekt: " + ex.getMessage());
+                ex.printStackTrace();
+            }
 
             // Fortæl HovdeVindue om det nye projekt
             // HovdeVindue tilføjer det til den delte liste og kalder buildTimeline + setProjekter
@@ -312,6 +333,11 @@ public class ProjektOversigt extends GridPane {
             Projekt valgt = comboBox.getValue();
             if (valgt != null) {
                 valgt.setNavn(txfNavn.getText());
+                try {
+                    controller.updateProjetk(valgt.getProjektId(), txfNavn.getText());
+                } catch (SQLException ex) {
+                    showAlert("Fejl ved opdatering af projekt: " + ex.getMessage());
+                }
                 buildTimeline(projekter);
             }
             stage.close();
@@ -320,6 +346,54 @@ public class ProjektOversigt extends GridPane {
         btnLuk.setOnAction(e -> stage.close());
 
         stage.setScene(new Scene(pane, 350, 200));
+        stage.showAndWait();
+    }
+
+    private void sletProjektAlert() throws SQLException {
+        Stage stage = new Stage();
+        stage.setTitle("Sletning af projekt:");
+
+        GridPane pane = new GridPane();
+        pane.setPadding(new Insets(20));
+        pane.setHgap(10);
+        pane.setVgap(10);
+
+        ComboBox<Projekt> cmbProjekt = new ComboBox<>();
+        cmbProjekt.getItems().setAll(projekter);
+        cmbProjekt.setPromptText("Vælg projekt");
+        cmbProjekt.setPrefWidth(200);
+
+        Button btnSletProjekt = new Button("Slet Projekt");
+
+        btnSletProjekt.setOnAction(e -> {
+            Projekt valgtProjekt = cmbProjekt.getValue();
+            if (valgtProjekt != null) {
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Advarsel Sletning af valgt projekt: " + valgtProjekt);
+                alert.setHeaderText("Er du sikker på du vil slette valgt Projekt?");
+                alert.setContentText("Hvis du trykker 'Ok' sletter du alt ved valgte Projekt");
+
+                Optional<ButtonType> resultat = alert.showAndWait();
+
+                if (resultat.isPresent() && resultat.get() == ButtonType.OK) {
+                    try {
+                        controller.deleteProjekt(valgtProjekt.getProjektId());
+                        projekter.remove(valgtProjekt);
+                        buildTimeline(projekter);
+                        System.out.println("Slettet");
+                    } catch (SQLException ex) {
+                        showAlert("Fejl ved sletning af projekt: " + ex.getMessage());
+                        ex.printStackTrace();
+                    }
+                }
+            }
+            stage.close();
+        });
+
+        pane.add(new Label("Projekter:"), 0, 0); pane.add(cmbProjekt, 1, 0);
+        pane.add(btnSletProjekt, 1, 1);
+
+        stage.setScene(new Scene(pane, 350, 150));
         stage.showAndWait();
     }
 

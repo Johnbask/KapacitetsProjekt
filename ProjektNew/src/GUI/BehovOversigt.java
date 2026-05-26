@@ -197,20 +197,23 @@ public class BehovOversigt extends BorderPane {
             }
 
             try {
-                RessourceBehov rb = new RessourceBehov(
+                RessourceBehov rb = controller.createRessourceBehov(
                         999,
                         tfRolle.getText(),
                         YearMonth.parse(tfStart.getText()),
                         YearMonth.parse(tfSlut.getText()),
                         Double.parseDouble(tfAndel.getText()),
                         1000,
-                        ØkonomiType.CAPEX
+                        ØkonomiType.CAPEX,
+                        selected.getProjektId()
                 );
 
-                selected.getRessourceBehov().add(rb);
-                lvwBehov.getItems().setAll(selected.getRessourceBehov());
-                buildChart(selected.getRessourceBehov(), selected);
-                fireBehovChanged();
+                if (rb != null) {
+                    selected.getRessourceBehov().add(rb);
+                    lvwBehov.getItems().setAll(selected.getRessourceBehov());
+                    buildChart(selected.getRessourceBehov(), selected);
+                    fireBehovChanged();
+                }
                 stage.close();
 
             } catch (Exception ex) {
@@ -260,6 +263,17 @@ public class BehovOversigt extends BorderPane {
                 selected.setSlutPeriode(YearMonth.parse(tfSlut.getText()));
                 selected.setAndel(Double.parseDouble(tfAndel.getText()));
 
+                controller.updateRessourceBehov(
+                        selected.getBehovId(),
+                        selected.getRolle(),
+                        selected.getStartPeriode(),
+                        selected.getSlutPeriode(),
+                        selected.getAndel(),
+                        selected.getTimePris(),
+                        selected.getØkonomiType(),
+                        selectedProjekt.getProjektId()
+                );
+
                 lvwBehov.refresh();
                 buildChart(selectedProjekt.getRessourceBehov(), selectedProjekt);
                 fireBehovChanged();
@@ -283,6 +297,14 @@ public class BehovOversigt extends BorderPane {
         RessourceBehov selected = lvwBehov.getSelectionModel().getSelectedItem();
 
         if (selectedProjekt == null || selected == null) return;
+
+        try {
+            controller.deleteRessourceBehov(selected.getBehovId());
+        } catch (SQLException e) {
+            showAlert("Fejl ved sletning: " + e.getMessage());
+            e.printStackTrace();
+            return;
+        }
 
         selectedProjekt.getRessourceBehov().remove(selected);
         lvwBehov.getItems().setAll(selectedProjekt.getRessourceBehov());
