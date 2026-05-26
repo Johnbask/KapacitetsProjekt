@@ -22,8 +22,9 @@ public abstract class Storage<T> {
 
     protected Connection getConnection() throws SQLException {
         String[][] configs = {
-                {"db.john.url", "db.john.user", "db.john.password"},
-                {"db.lasse.url", "db.lasse.user", "db.lasse.password"}
+                {"db.lasse.url", "db.lasse.user", "db.lasse.password"},
+                {"db.john.url", "db.john.user", "db.john.password"}
+
         };
 
         for (String[] config : configs) {
